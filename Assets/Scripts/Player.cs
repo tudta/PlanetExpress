@@ -44,6 +44,7 @@ public class Player : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        selectionVisual = Resources.Load("Images/GoldHighlight") as Texture2D;
     }
 
 	// Use this for initialization
