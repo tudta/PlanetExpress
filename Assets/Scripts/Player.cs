@@ -1,12 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Player : MonoBehaviour
 {
     private static Player instance = null;
     [SerializeField] private GameStates currentState = GameStates.DEFAULT;
+    [SerializeField] private PlayerCamera cam;
+    private List<GameObject> selectedUnits = new List<GameObject>();
+    private Rect selection = new Rect(0, 0, 0, 0);
+    private Texture2D selectionVisual;
+    private Vector3 startClick = -Vector3.one;
     private GameObject buildingObj = null;
 
+    #region Properties
     public static Player Instance
     {
         get
@@ -16,10 +23,7 @@ public class Player : MonoBehaviour
 
         set
         {
-            if (instance == null)
-            {
-                instance = value;
-            }
+            instance = value;
         }
     }
 
@@ -35,6 +39,7 @@ public class Player : MonoBehaviour
             buildingObj = value;
         }
     }
+    #endregion
 
     void Awake()
     {
@@ -74,6 +79,32 @@ public class Player : MonoBehaviour
 
     void CheckInput()
     {
+        if (Input.GetAxis("Mouse ScrollWheel") != 0.0f)
+        {
+            cam.ZoomCamera(Input.GetAxis("Mouse ScrollWheel"));
+        }
+        if (Input.GetMouseButtonDown(0))
+        {
+            startClick = Input.mousePosition;
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            startClick = -Vector3.one;
+        }
+        if (Input.GetMouseButton(0))
+        {
+            selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
+            if (selection.width < 0)
+            {
+                selection.x += selection.width;
+                selection.width = -selection.width;
+            }
+            if (selection.height < 0)
+            {
+                selection.y += selection.height;
+                selection.height = -selection.height;
+            }
+        }
         switch (currentState)
         {
             case GameStates.DEFAULT:
@@ -106,4 +137,17 @@ public class Player : MonoBehaviour
         currentState = (GameStates)System.Enum.Parse(typeof(GameStates), stateName);
     }
 
+    public static float InvertMouseY(float y)
+    {
+        return Screen.height - y;
+    }
+
+    private void OnGUI()
+    {
+        if (startClick != -Vector3.one)
+        {
+            GUI.color = new Color(1, 1, 1, 0.5f);
+            GUI.DrawTexture(selection, selectionVisual);
+        }
+    }
 }   
