@@ -82,9 +82,9 @@ public class PlayerCamera : MonoBehaviour
 		topScrollLimit = (int)(Screen.height - (Screen.height / 16) * 1.78f);
 		bottomScrollLimit = (int)(0 + (Screen.height / 16) * 1.78f);
 	}
-
+    
     /*
-     * USE TO SHOW CAMERA MOVE BORDERS
+    //USE TO SHOW CAMERA MOVE BORDERS
     private void OnGUI()
     {
         Texture2D tex = new Texture2D(1, 1);
