@@ -1,5 +1,4 @@
-﻿public enum GameStates
-{
+﻿public enum GameStates {
     DEFAULT,
     PLAY,
     BUILD,
