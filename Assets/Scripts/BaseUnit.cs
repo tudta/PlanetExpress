@@ -22,28 +22,6 @@ public class BaseUnit : MonoBehaviour
 
     // Update is called once per frame
     void Update() {
-        if (isSelected) {
-            ren.material.color = Color.green;
-            if (Input.GetMouseButtonDown(1)) {
-                //print ("Right-Clicked!");
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
-
-                LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
-                if (Physics.Raycast(ray, out hit, 200, mask)) {
-                    if (!agent.enabled) {
-                        StartCoroutine(ToggleAgent(hit.point));
-                    }
-                    else {
-                        agent.destination = hit.point;
-                    }
-                    currentState = UnitState.TRANSIT;
-                }
-            }
-        }
-        else {
-            ren.material.color = Color.white;
-        }
         if (ren.isVisible && Input.GetMouseButton(0)) {
             Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
             camPos.y = Player.InvertMouseY(camPos.y);
@@ -53,7 +31,6 @@ public class BaseUnit : MonoBehaviour
             else {
                 UnselectUnit();
             }
-            //UI_Manager.instance.SelectUnits();
         }
         CheckArrival();
     }
@@ -63,6 +40,7 @@ public class BaseUnit : MonoBehaviour
             Player.Instance.SelectedUnits.Add(this);
         }
         isSelected = true;
+        ren.material.color = Color.green;
     }
 
     public void UnselectUnit() {
@@ -70,6 +48,7 @@ public class BaseUnit : MonoBehaviour
             Player.Instance.SelectedUnits.Remove(this);
         }
         isSelected = false;
+        ren.material.color = Color.white;
     }
 
     private void CheckArrival() {
@@ -100,10 +79,25 @@ public class BaseUnit : MonoBehaviour
     }
 
     public void MoveTo(Vector3 pos) {
-        agent.destination = pos;
+        if (!agent.enabled)
+        {
+            StartCoroutine(ToggleAgent(pos));
+        }
+        else {
+            agent.destination = pos;
+        }
+        currentState = UnitState.TRANSIT;
     }
 
     public void MoveTo(Transform trans) {
+        if (!agent.enabled)
+        {
+            StartCoroutine(ToggleAgent(trans.position));
+        }
+        else {
+            agent.destination = trans.position;
+        }
+        currentState = UnitState.TRANSIT;
         agent.destination = trans.position;
     }
 }

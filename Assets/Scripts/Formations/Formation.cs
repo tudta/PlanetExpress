@@ -3,26 +3,54 @@ using System.Collections;
 using System.Collections.Generic;
 
 public abstract class Formation {
-    public enum FormationType {LINE, BOX, ZIPPER}
     private FormationType type;
     private int maxUnitCount;
     private List<Vector3> positions = new List<Vector3>();
 
     #region Properties
-    public List<Vector3> Positions {
-        get {
+    public FormationType Type
+    {
+        get
+        {
+            return type;
+        }
+
+        set
+        {
+            type = value;
+        }
+    }
+
+    public int MaxUnitCount
+    {
+        get
+        {
+            return maxUnitCount;
+        }
+
+        set
+        {
+            maxUnitCount = value;
+        }
+    }
+
+    public List<Vector3> Positions
+    {
+        get
+        {
             return positions;
         }
 
-        set {
+        set
+        {
             positions = value;
         }
     }
     #endregion
 
     public Formation(int maxUnits, FormationType formType) {
-        maxUnitCount = maxUnits;
-        type = formType;
+        MaxUnitCount = maxUnits;
+        Type = formType;
     }
 
     public virtual void AssignPositions() {
