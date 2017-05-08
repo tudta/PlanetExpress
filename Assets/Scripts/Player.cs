@@ -7,7 +7,7 @@ public class Player : MonoBehaviour
     private static Player instance = null;
     [SerializeField] private GameStates currentState = GameStates.PLAY;
     [SerializeField] private PlayerCamera cam;
-    private Formation currentForm;
+    private Formation currentForm = new BoxFormation();
     private List<BaseUnit> selectedUnits = new List<BaseUnit>();
     private static Rect selection = new Rect(0, 0, 0, 0);
     private Texture2D selectionVisual;
@@ -93,12 +93,11 @@ public class Player : MonoBehaviour
                     LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                         if (selectedUnits.Count == 1) {
-                            currentForm.Type = FormationType.DEFAULT;
                             selectedUnits[0].MoveTo(hit.point);
                         }
                         if (selectedUnits.Count > 1)
                         {
-                            if (currentForm.Type != FormationType.DEFAULT && currentForm.MaxUnitCount >= selectedUnits.Count)
+                            if (currentForm != null && currentForm.MaxUnitCount >= selectedUnits.Count)
                             {
                                 for (int i = 0; i < selectedUnits.Count; i++)
                                 {
@@ -113,7 +112,6 @@ public class Player : MonoBehaviour
                     if (selectedUnits.Count > 0)
                     {
                         currentForm = new LineFormation();
-                        currentForm.AssignPositions();
                         Vector3 cenPos = Vector3.zero;
                         for (int i = 0; i < selectedUnits.Count; i++)
                         {
@@ -131,7 +129,6 @@ public class Player : MonoBehaviour
                     if (selectedUnits.Count > 0)
                     {
                         currentForm = new ZipperFormation();
-                        currentForm.AssignPositions();
                         Vector3 cenPos = Vector3.zero;
                         for (int i = 0; i < selectedUnits.Count; i++)
                         {
@@ -149,7 +146,6 @@ public class Player : MonoBehaviour
                     if (selectedUnits.Count > 0)
                     {
                         currentForm = new BoxFormation();
-                        currentForm.AssignPositions();
                         Vector3 cenPos = Vector3.zero;
                         for (int i = 0; i < selectedUnits.Count; i++)
                         {
