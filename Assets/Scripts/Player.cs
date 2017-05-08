@@ -5,9 +5,10 @@ using System.Collections.Generic;
 public class Player : MonoBehaviour
 {
     private static Player instance = null;
-    [SerializeField] private GameStates currentState = GameStates.DEFAULT;
+    [SerializeField] private GameStates currentState = GameStates.PLAY;
     [SerializeField] private PlayerCamera cam;
-    private List<GameObject> selectedUnits = new List<GameObject>();
+    private Formation currentForm;
+    private List<BaseUnit> selectedUnits = new List<BaseUnit>();
     private static Rect selection = new Rect(0, 0, 0, 0);
     private Texture2D selectionVisual;
     private Vector3 startClick = -Vector3.one;
@@ -17,6 +18,15 @@ public class Player : MonoBehaviour
     public static Player Instance {get{return instance;} set{instance = value;}}
     public GameObject BuildingObj {get{return buildingObj;} set{buildingObj = value;}}
     public static Rect Selection {get{return selection;} set{selection = value;}}
+    public List<BaseUnit> SelectedUnits {
+        get {
+            return selectedUnits;
+        }
+
+        set {
+            selectedUnits = value;
+        }
+    }
     #endregion
 
     void Awake() {
@@ -34,6 +44,23 @@ public class Player : MonoBehaviour
         CheckInput();
         switch (currentState) {
             case GameStates.PLAY:
+                if (Input.GetMouseButtonDown(0)) {
+                    startClick = Input.mousePosition;
+                }
+                else if (Input.GetMouseButtonUp(0)) {
+                    startClick = -Vector3.one;
+                }
+                if (Input.GetMouseButton(0)) {
+                    selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
+                    if (Selection.width < 0) {
+                        selection.x += Selection.width;
+                        selection.width = -Selection.width;
+                    }
+                    if (Selection.height < 0) {
+                        selection.y += Selection.height;
+                        selection.height = -Selection.height;
+                    }
+                }
                 break;
             case GameStates.BUILD:
                 if (buildingObj != null) {
@@ -55,27 +82,86 @@ public class Player : MonoBehaviour
         if (Input.GetAxis("Mouse ScrollWheel") != 0.0f) {
             cam.ZoomCamera(Input.GetAxis("Mouse ScrollWheel"));
         }
-        if (Input.GetMouseButtonDown(0)) {
-            startClick = Input.mousePosition;
-        }
-        else if (Input.GetMouseButtonUp(0)) {
-            startClick = -Vector3.one;
-        }
-        if (Input.GetMouseButton(0)) {
-            selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
-            if (Selection.width < 0) {
-                selection.x += Selection.width;
-                selection.width = -Selection.width;
-            }
-            if (Selection.height < 0) {
-                selection.y += Selection.height;
-                selection.height = -Selection.height;
-            }
-        }
         switch (currentState) {
             case GameStates.DEFAULT:
                 break;
             case GameStates.PLAY:
+                if (Input.GetMouseButtonDown(1)) {
+                    //print ("Right-Clicked!");
+                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    RaycastHit hit;
+                    LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
+                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                        if (selectedUnits.Count == 1) {
+                            currentForm.Type = FormationType.DEFAULT;
+                            selectedUnits[0].MoveTo(hit.point);
+                        }
+                        if (selectedUnits.Count > 1)
+                        {
+                            if (currentForm.Type != FormationType.DEFAULT && currentForm.MaxUnitCount >= selectedUnits.Count)
+                            {
+                                for (int i = 0; i < selectedUnits.Count; i++)
+                                {
+                                    selectedUnits[i].MoveTo(hit.point + currentForm.Positions[i]);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                {
+                    if (selectedUnits.Count > 0)
+                    {
+                        currentForm = new LineFormation();
+                        currentForm.AssignPositions();
+                        Vector3 cenPos = Vector3.zero;
+                        for (int i = 0; i < selectedUnits.Count; i++)
+                        {
+                            cenPos += selectedUnits[i].transform.position;
+                        }
+                        cenPos /= selectedUnits.Count - 1;
+                        for (int i = 0; i < selectedUnits.Count; i++)
+                        {
+                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i]);
+                        }
+                    }
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha2))
+                {
+                    if (selectedUnits.Count > 0)
+                    {
+                        currentForm = new ZipperFormation();
+                        currentForm.AssignPositions();
+                        Vector3 cenPos = Vector3.zero;
+                        for (int i = 0; i < selectedUnits.Count; i++)
+                        {
+                            cenPos += selectedUnits[i].transform.position;
+                        }
+                        cenPos /= selectedUnits.Count - 1;
+                        for (int i = 0; i < selectedUnits.Count; i++)
+                        {
+                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i]);
+                        }
+                    }
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha3))
+                {
+                    if (selectedUnits.Count > 0)
+                    {
+                        currentForm = new BoxFormation();
+                        currentForm.AssignPositions();
+                        Vector3 cenPos = Vector3.zero;
+                        for (int i = 0; i < selectedUnits.Count; i++)
+                        {
+                            cenPos += selectedUnits[i].transform.position;
+                        }
+                        cenPos /= selectedUnits.Count - 1;
+                        for (int i = 0; i < selectedUnits.Count; i++)
+                        {
+                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i]);
+                        }
+                    }
+                }
                 break;
             case GameStates.BUILD:
                 if (Input.GetMouseButton(0)) {
