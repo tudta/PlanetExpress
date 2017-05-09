@@ -15,11 +15,12 @@ public class GameManager : MonoBehaviour
 	
 	}
 
-    public void CreateBuilding(string name)
-    {
+    public void CreateBuilding(string name) {
         GameObject tmpGO = (GameObject)Resources.Load(buildingPath + name);
         tmpGO = Instantiate(tmpGO);
-        Player.Instance.BuildingObj = tmpGO;
+        Building tmpBuilding = tmpGO.GetComponent<Building>();
+        Player.Instance.TarBuildingObj = tmpGO;
+        Player.Instance.TarBuilding = tmpBuilding;
         Player.Instance.SwitchState("BUILD");
     }
 }
