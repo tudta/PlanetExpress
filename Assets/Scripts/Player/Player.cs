@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class Player : MonoBehaviour
 {
     private static Player instance = null;
-    [SerializeField] private GameStates currentState = GameStates.PLAY;
+    private GameManager gm = null;
     [SerializeField] private PlayerCamera cam;
     private Formation currentForm = new BoxFormation();
     private List<BaseUnit> selectedUnits = new List<BaseUnit>();
@@ -24,19 +24,19 @@ public class Player : MonoBehaviour
     #endregion
 
     void Awake() {
-        Instance = this;
-        selectionVisual = Resources.Load("Images/GoldHighlight") as Texture2D;
+        instance = this;
     }
 
 	// Use this for initialization
 	void Start () {
-	
-	}
+        gm = GameManager.Instance;
+        selectionVisual = Resources.Load("Images/GoldHighlight") as Texture2D;
+    }
 	
 	// Update is called once per frame
 	void Update () {
         CheckInput();
-        switch (currentState) {
+        switch (gm.CurrentState) {
             case GameStates.PLAY:
                 if (Input.GetMouseButtonDown(0)) {
                     startClick = Input.mousePosition;
@@ -76,7 +76,7 @@ public class Player : MonoBehaviour
         if (Input.GetAxis("Mouse ScrollWheel") != 0.0f) {
             cam.ZoomCamera(Input.GetAxis("Mouse ScrollWheel"));
         }
-        switch (currentState) {
+        switch (gm.CurrentState) {
             case GameStates.DEFAULT:
                 break;
             case GameStates.PLAY:
@@ -143,9 +143,9 @@ public class Player : MonoBehaviour
                     //Place building
                     if (tarBuilding.CanBePlaced) {
                         tarBuilding.PlaceBuilding();
+                        //Switch to play mode
+                        SwitchState("PLAY");
                     }
-                    //Switch to play mode
-                    SwitchState("PLAY");
                 }
                 if (Input.GetMouseButton(1)) {
                     //Destroy building
@@ -160,7 +160,7 @@ public class Player : MonoBehaviour
     }
 
     public void SwitchState(string stateName) {
-        currentState = (GameStates)System.Enum.Parse(typeof(GameStates), stateName);
+        gm.CurrentState = (GameStates)System.Enum.Parse(typeof(GameStates), stateName);
     }
 
     public static float InvertMouseY(float y) {

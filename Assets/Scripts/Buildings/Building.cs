@@ -7,6 +7,8 @@ public abstract class Building : MonoBehaviour {
     [SerializeField] private bool isBuilt = false;
 
     public bool CanBePlaced {get{return canBePlaced;} set{canBePlaced = value;}}
+    public bool IsPlaced {get{return isPlaced;} set{isPlaced = value;}}
+    public bool IsBuilt {get{return isBuilt;} set{isBuilt = value;}}
 
     // Use this for initialization
     void Start () {
@@ -15,7 +17,7 @@ public abstract class Building : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+
 	}
 
     void Produce() {
@@ -41,7 +43,7 @@ public abstract class Building : MonoBehaviour {
     public void PlaceBuilding() {
         if (CanBePlaced)
         {
-            isPlaced = true;
+            IsPlaced = true;
             MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
             foreach (MeshRenderer ren in rens)
             {
@@ -51,8 +53,7 @@ public abstract class Building : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider other) {
-        Debug.Log(other.name);
-        if (isPlaced == false) {
+        if (IsPlaced == false) {
             if (CanBePlaced) {
                 InvalidatePlacement();
             }
@@ -60,8 +61,7 @@ public abstract class Building : MonoBehaviour {
     }
 
     void OnTriggerStay(Collider other) {
-        Debug.Log(other.name);
-        if (isPlaced == false) {
+        if (IsPlaced == false) {
             if (CanBePlaced) {
                 InvalidatePlacement();
             }
@@ -69,8 +69,7 @@ public abstract class Building : MonoBehaviour {
     }
 
     void OnTriggerExit(Collider other) {
-        Debug.Log(other.name);
-        if (isPlaced == false) {
+        if (IsPlaced == false) {
             if (!CanBePlaced) {
                 ValidatePlacement();
             }
