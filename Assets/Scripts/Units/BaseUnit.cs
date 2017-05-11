@@ -251,7 +251,15 @@ public class BaseUnit : GameUnit
     }
 
     public override void ApplyDamage(int damage) {
-        base.ApplyDamage(damage);
+        Health -= damage;
+        if (Health <= 0)
+        {
+            if (Player.Instance.SelectedUnits.Contains(this))
+            {
+                Player.Instance.SelectedUnits.Remove(this);
+            }
+            Destroy(gameObject);
+        }
     }
 
     void OnDrawGizmos() {
