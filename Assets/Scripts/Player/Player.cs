@@ -87,12 +87,12 @@ public class Player : MonoBehaviour
                     LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                         if (selectedUnits.Count == 1) {
-                            selectedUnits[0].MoveTo(hit.point);
+                            selectedUnits[0].MoveTo(hit.point, UnitStates.TRANSIT);
                         }
                         if (selectedUnits.Count > 1) {
                             if (currentForm != null && currentForm.MaxUnitCount >= selectedUnits.Count) {
                                 for (int i = 0; i < selectedUnits.Count; i++) {
-                                    selectedUnits[i].MoveTo(hit.point + currentForm.Positions[i]);
+                                    selectedUnits[i].MoveTo(hit.point + currentForm.Positions[i], UnitStates.TRANSIT);
                                 }
                             }
                         }
@@ -107,7 +107,7 @@ public class Player : MonoBehaviour
                         }
                         cenPos /= selectedUnits.Count - 1;
                         for (int i = 0; i < selectedUnits.Count; i++) {
-                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i]);
+                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
                         }
                     }
                 }
@@ -120,7 +120,7 @@ public class Player : MonoBehaviour
                         }
                         cenPos /= selectedUnits.Count - 1;
                         for (int i = 0; i < selectedUnits.Count; i++) {
-                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i]);
+                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
                         }
                     }
                 }
@@ -133,7 +133,7 @@ public class Player : MonoBehaviour
                         }
                         cenPos /= selectedUnits.Count - 1;
                         for (int i = 0; i < selectedUnits.Count; i++) {
-                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i]);
+                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
                         }
                     }
                 }

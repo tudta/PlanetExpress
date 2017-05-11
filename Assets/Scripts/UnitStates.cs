@@ -1,0 +1,1 @@
+﻿public enum UnitStates {IDLE, TRANSIT, ATTACK, PATROL};

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public abstract class Building : MonoBehaviour {
+public abstract class Building : GameUnit {
     [SerializeField] private bool canBePlaced = false;
     [SerializeField] private bool isPlaced = false;
     [SerializeField] private bool isBuilt = false;
@@ -11,20 +11,20 @@ public abstract class Building : MonoBehaviour {
     public bool IsBuilt {get{return isBuilt;} set{isBuilt = value;}}
 
     // Use this for initialization
-    void Start () {
+    public override void Start () {
 	
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	public override void Update () {
 
 	}
 
-    void Produce() {
+    private void Produce() {
 
     }
 
-    void ValidatePlacement() {
+    private void ValidatePlacement() {
         CanBePlaced = true;
         MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
         foreach (MeshRenderer ren in rens) {
@@ -32,7 +32,7 @@ public abstract class Building : MonoBehaviour {
         }
     }
 
-    void InvalidatePlacement() {
+    private void InvalidatePlacement() {
         CanBePlaced = false;
         MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
         foreach (MeshRenderer ren in rens) {
@@ -52,7 +52,7 @@ public abstract class Building : MonoBehaviour {
         }
     }
 
-    void OnTriggerEnter(Collider other) {
+    private void OnTriggerEnter(Collider other) {
         if (IsPlaced == false) {
             if (CanBePlaced) {
                 InvalidatePlacement();
@@ -60,7 +60,7 @@ public abstract class Building : MonoBehaviour {
         }
     }
 
-    void OnTriggerStay(Collider other) {
+    private void OnTriggerStay(Collider other) {
         if (IsPlaced == false) {
             if (CanBePlaced) {
                 InvalidatePlacement();
@@ -68,7 +68,7 @@ public abstract class Building : MonoBehaviour {
         }
     }
 
-    void OnTriggerExit(Collider other) {
+    private void OnTriggerExit(Collider other) {
         if (IsPlaced == false) {
             if (!CanBePlaced) {
                 ValidatePlacement();
