@@ -51,7 +51,6 @@ public abstract class Formation {
     public Formation(int maxUnits, FormationType formType) {
         MaxUnitCount = maxUnits;
         Type = formType;
-        AssignPositions();
     }
 
     public virtual void AssignPositions() {
