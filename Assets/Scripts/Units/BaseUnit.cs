@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class BaseUnit : GameUnit
+public class BaseUnit : MonoBehaviour
 {
+    [SerializeField] private GameUnit gUnit = null;
     [SerializeField]private UnitStates currentState = UnitStates.IDLE;
     private UnitStates lastState = UnitStates.IDLE;
     [SerializeField] private float movespeed = 0.0f;
@@ -22,24 +23,96 @@ public class BaseUnit : GameUnit
     private bool isChangingAgent = false;
     [SerializeField] private float distThreshold = 0.0f;
 
-    public override void Awake() {
+    #region Properties
+    public GameUnit GUnit {
+        get {
+            return gUnit;
+        }
+
+        set {
+            gUnit = value;
+        }
+    }
+
+    public float Movespeed {
+        get {
+            return movespeed;
+        }
+
+        set {
+            movespeed = value;
+        }
+    }
+
+    public float VisionRadius {
+        get {
+            return visionRadius;
+        }
+
+        set {
+            visionRadius = value;
+        }
+    }
+
+    public int Damage {
+        get {
+            return damage;
+        }
+
+        set {
+            damage = value;
+        }
+    }
+
+    public float AttackRange {
+        get {
+            return attackRange;
+        }
+
+        set {
+            attackRange = value;
+        }
+    }
+
+    public float ProjectileSpeed {
+        get {
+            return projectileSpeed;
+        }
+
+        set {
+            projectileSpeed = value;
+        }
+    }
+
+    public float AttackSpeed {
+        get {
+            return attackSpeed;
+        }
+
+        set {
+            attackSpeed = value;
+        }
+    }
+    #endregion
+
+    void Awake() {
         agent.stoppingDistance = 0.0f;
         StartCoroutine(ToggleAgent(UnitStates.IDLE));
     }
 
 	// Use this for initialization
-	public override void Start () {
+	void Start () {
         
     }
 
     // Update is called once per frame
-    public override void Update() {
+    void Update() {
         if (GameManager.Instance.CurrentState == GameStates.PLAY) {
             //Check if player is selecting unit
             if (ren.isVisible && Input.GetMouseButton(0)) {
                 Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
                 camPos.y = Player.InvertMouseY(camPos.y);
-                if (Player.Selection.Contains(camPos)) {
+                if (Player.Selection.Contains(camPos) && gUnit.Team == Player.Instance.Team) {
                     SelectUnit();
                 }
                 else {
@@ -84,19 +157,21 @@ public class BaseUnit : GameUnit
     }
 
     public void SelectUnit() {
-        if (!Player.Instance.SelectedUnits.Contains(this)) {
+        if (!Player.Instance.SelectedUnits.Contains(this) && Player.Instance.SelectedUnits.Count < Player.Instance.MaxSelectionCount) {
             Player.Instance.SelectedUnits.Add(this);
+            isSelected = true;
+            ren.material.color = Color.green;
+            UIManager.Instance.AddUnitToGroup(this);
         }
-        isSelected = true;
-        ren.material.color = Color.green;
     }
 
     public void UnselectUnit() {
         if (Player.Instance.SelectedUnits.Contains(this)) {
             Player.Instance.SelectedUnits.Remove(this);
+            isSelected = false;
+            ren.material.color = Color.white;
+            UIManager.Instance.RemoveUnitFromGroup(this);
         }
-        isSelected = false;
-        ren.material.color = Color.white;
     }
 
     private void CheckArrival() {
@@ -186,10 +261,10 @@ public class BaseUnit : GameUnit
 
     public void ScanForEnemiesInVision() {
         GameUnit gUnit;
-        Collider[] cols = Physics.OverlapSphere(transform.position, visionRadius);
+        Collider[] cols = Physics.OverlapSphere(transform.position, VisionRadius);
         foreach (Collider col in cols) {
             gUnit = col.GetComponent<GameUnit>();
-            if (gUnit != null && gUnit.GUnitType != GameUnitTypes.TERRAIN && gUnit.Team != this.Team) {
+            if (gUnit != null && gUnit.GUnitType != GameUnitTypes.TERRAIN && gUnit.Team != gUnit.Team) {
                 SetTarget(gUnit.transform);
                 break;
             }
@@ -198,10 +273,10 @@ public class BaseUnit : GameUnit
 
     public void ScanForEnemiesInAttackRange() {
         GameUnit gUnit;
-        Collider[] cols = Physics.OverlapSphere(transform.position, attackRange);
+        Collider[] cols = Physics.OverlapSphere(transform.position, AttackRange);
         foreach (Collider col in cols) {
             gUnit = GetComponent<GameUnit>();
-            if (gUnit != null && gUnit.GUnitType != GameUnitTypes.TERRAIN && gUnit.Team != this.Team) {
+            if (gUnit != null && gUnit.GUnitType != GameUnitTypes.TERRAIN && gUnit.Team != gUnit.Team) {
                 SetTarget(gUnit.transform);
                 break;
             }
@@ -212,7 +287,7 @@ public class BaseUnit : GameUnit
         Vector3 pos = new Vector3(transform.position.x, transform.position.y + 1.0f, transform.position.z);
         Vector3 dir = (t.position - transform.position).normalized;
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, dir, out hit, attackRange)) {
+        if (Physics.Raycast(transform.position, dir, out hit, AttackRange)) {
             if (hit.transform == t) {
                 return true;
             }
@@ -244,22 +319,14 @@ public class BaseUnit : GameUnit
             canFire = false;
             transform.LookAt(tar);
             GameObject go = (GameObject)Instantiate(projectile, firePoint.position, firePoint.rotation);
-            go.GetComponent<Projectile>().SetProjectileValues(Team, projectileSpeed, damage);
-            yield return new WaitForSeconds(attackSpeed);
+            go.GetComponent<Projectile>().SetProjectileValues(gUnit.Team, ProjectileSpeed, Damage);
+            yield return new WaitForSeconds(AttackSpeed);
             canFire = true;
         }
     }
 
-    public override void ApplyDamage(int damage) {
-        Health -= damage;
-        if (Health <= 0)
-        {
-            if (Player.Instance.SelectedUnits.Contains(this))
-            {
-                Player.Instance.SelectedUnits.Remove(this);
-            }
-            Destroy(gameObject);
-        }
+    public void ApplyDamage(int damage) {
+        gUnit.ApplyDamage(damage);
     }
 
     void OnDrawGizmos() {

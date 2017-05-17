@@ -7,8 +7,10 @@ public class Player : MonoBehaviour
     private static Player instance = null;
     private GameManager gm = null;
     [SerializeField] private PlayerCamera cam;
+    [SerializeField] private int team = 0;
     private Formation currentForm = new BoxFormation();
     private List<BaseUnit> selectedUnits = new List<BaseUnit>();
+    [SerializeField] private int maxSelectionCount = 0;
     private static Rect selection = new Rect(0, 0, 0, 0);
     private Texture2D selectionVisual;
     private Vector3 startClick = -Vector3.one;
@@ -17,8 +19,10 @@ public class Player : MonoBehaviour
 
     #region Properties
     public static Player Instance {get{return instance;} set{instance = value;}}
+    public int Team {get{return team;} set{team = value;}}
     public static Rect Selection {get{return selection;} set{selection = value;}}
     public List<BaseUnit> SelectedUnits {get{return selectedUnits;} set{selectedUnits = value;}}
+    public int MaxSelectionCount {get{return maxSelectionCount;} set{maxSelectionCount = value;}}
     public GameObject TarBuildingObj {get{return tarBuildingObj;} set{tarBuildingObj = value;}}
     public Building TarBuilding {get{return tarBuilding;} set{tarBuilding = value;}}
     #endregion
