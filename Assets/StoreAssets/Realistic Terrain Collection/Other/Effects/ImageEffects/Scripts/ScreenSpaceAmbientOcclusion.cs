@@ -2,7 +2,7 @@ using UnityEngine;
 
 [ExecuteInEditMode]
 [RequireComponent (typeof(Camera))]
-[AddComponentMenu("Image Effects/Screen Space Ambient Occlusion")]
+[AddComponentMenu("Image Effects/Rendering/Screen Space Ambient Occlusion")]
 public class SSAOEffect : MonoBehaviour
 {
 	public enum SSAOSamples {
@@ -84,6 +84,7 @@ public class SSAOEffect : MonoBehaviour
 		}
 	}
 	
+	[ImageEffectOpaque]
 	void OnRenderImage (RenderTexture source, RenderTexture destination)
 	{
 		if (!m_Supported || !m_SSAOShader.isSupported) {
