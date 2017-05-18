@@ -12,6 +12,7 @@ public class BaseUnit : MonoBehaviour
     [SerializeField] private float attackRange = 0.0f;
     [SerializeField] private float projectileSpeed = 0.0f;
     [SerializeField] private float attackSpeed = 0.0f;
+    [SerializeField] private int unitTier = 0;
     [SerializeField] private GameObject projectile = null;
     [SerializeField] private Transform firePoint = null;
     private bool canFire = true;
@@ -93,6 +94,19 @@ public class BaseUnit : MonoBehaviour
             attackSpeed = value;
         }
     }
+
+    public int UnitTier
+    {
+        get
+        {
+            return unitTier;
+        }
+
+        set
+        {
+            unitTier = value;
+        }
+    }
     #endregion
 
     void Awake() {
@@ -162,6 +176,10 @@ public class BaseUnit : MonoBehaviour
             isSelected = true;
             ren.material.color = Color.green;
             UIManager.Instance.AddUnitToGroup(this);
+            if (Player.Instance.SelectedUnits.Count == 1)
+            {
+                Player.Instance.DesignatedUnit = this;
+            }
         }
     }
 
@@ -171,6 +189,10 @@ public class BaseUnit : MonoBehaviour
             isSelected = false;
             ren.material.color = Color.white;
             UIManager.Instance.RemoveUnitFromGroup(this);
+            if (Player.Instance.DesignatedUnit == this)
+            {
+                Player.Instance.DesignatedUnit = null;
+            }
         }
     }
 

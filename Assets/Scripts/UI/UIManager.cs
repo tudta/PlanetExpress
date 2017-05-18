@@ -10,6 +10,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject groupInfoPanel = null;
     private List<UnitTile> unitTiles = new List<UnitTile>();
     private Player player = null;
+    [SerializeField] private Image designatedUnitPortrait = null;
+    [SerializeField] private Slider designatedUnitSlider = null;
+    [SerializeField] private Text designatedUnitDamage = null;
+    [SerializeField] private Text designatedUnitAttackSpeed = null;
+    [SerializeField] private Text designatedUnitAttackRange = null;
+    [SerializeField] private Text designatedUnitMoveSpeed = null;
+    [SerializeField] private Text designatedUnitVisionRadius = null;
+    [SerializeField] private Text designatedUnitTier = null;
 
     #region Properties
     public static UIManager Instance {get{return instance;} set{instance = value;}}
@@ -26,6 +34,7 @@ public class UIManager : MonoBehaviour
 	
 	// Update is called once per frame
 	void Update () {
+        UpdateUnitInfoPanel();
         UpdateGroupInfoPanel();
 	}
 
@@ -46,7 +55,35 @@ public class UIManager : MonoBehaviour
     }
 
     public void UpdateUnitInfoPanel() {
-
+        //Update with info of designated unit
+        if (player.DesignatedUnit != null) {
+            if (!designatedUnitPortrait.gameObject.activeSelf)
+            {
+                designatedUnitPortrait.gameObject.SetActive(true);
+                designatedUnitDamage.gameObject.SetActive(true);
+                designatedUnitAttackSpeed.gameObject.SetActive(true);
+                designatedUnitAttackRange.gameObject.SetActive(true);
+                designatedUnitMoveSpeed.gameObject.SetActive(true);
+                designatedUnitVisionRadius.gameObject.SetActive(true);
+                designatedUnitTier.gameObject.SetActive(true);
+            }
+            designatedUnitPortrait.sprite = player.DesignatedUnit.GUnit.UnitPortrait;
+            designatedUnitDamage.text = "Damage: " + player.DesignatedUnit.Damage;
+            designatedUnitAttackSpeed.text = "Attackspeed: " + player.DesignatedUnit.AttackSpeed;
+            designatedUnitAttackRange.text = "Range: " + player.DesignatedUnit.AttackRange;
+            designatedUnitMoveSpeed.text = "Movespeed: " + player.DesignatedUnit.Movespeed;
+            designatedUnitVisionRadius.text = "Vision Radius: " + player.DesignatedUnit.VisionRadius;
+            designatedUnitTier.text = "Unit Tier: " + player.DesignatedUnit.UnitTier;
+        }
+        else {
+            designatedUnitPortrait.gameObject.SetActive(false);
+            designatedUnitDamage.gameObject.SetActive(false);
+            designatedUnitAttackSpeed.gameObject.SetActive(false);
+            designatedUnitAttackRange.gameObject.SetActive(false);
+            designatedUnitMoveSpeed.gameObject.SetActive(false);
+            designatedUnitVisionRadius.gameObject.SetActive(false);
+            designatedUnitTier.gameObject.SetActive(false);
+        }
     }
 
     public void UpdateGroupInfoPanel() {
