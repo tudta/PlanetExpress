@@ -5,19 +5,23 @@
 @script RequireComponent (Camera)
 
 class PostEffectsBase extends MonoBehaviour {	
+	protected var supportHDRTextures : boolean = true;
+	protected var supportDX11 : boolean = false;
+	protected var isSupported : boolean = true;
+	
 	function CheckShaderAndCreateMaterial (s : Shader, m2Create : Material) : Material {
-		if (m2Create && m2Create.shader == s) 
-			return m2Create;
-		
 		if (!s) { 
 			Debug.Log("Missing shader in " + this.ToString ());
 			enabled = false;
 			return null;
 		}
+			
+		if (s.isSupported && m2Create && m2Create.shader == s) 
+			return m2Create;
 		
 		if (!s.isSupported) {
 			NotSupported ();
-			Debug.LogError("The shader " + s.ToString() + " on effect "+this.ToString()+" is not supported on this platform!");
+			Debug.Log("The shader " + s.ToString() + " on effect "+this.ToString()+" is not supported on this platform!");
 			return null;
 		}
 		else {
@@ -30,13 +34,13 @@ class PostEffectsBase extends MonoBehaviour {
 	}
 
 	function CreateMaterial (s : Shader, m2Create : Material) : Material {
-		if (m2Create && m2Create.shader == s) 
-			return m2Create;
-		
 		if (!s) { 
 			Debug.Log ("Missing shader in " + this.ToString ());
 			return null;
 		}
+			
+		if (m2Create && (m2Create.shader == s) && (s.isSupported)) 
+			return m2Create;
 		
 		if (!s.isSupported) {
 			return null;
@@ -49,13 +53,29 @@ class PostEffectsBase extends MonoBehaviour {
 			else return null;
 		}
 	}
+	
+	function OnEnable() {
+		isSupported = true;
+	}	
 
-	// deprecated but needed for old effects to survive upgrading
 	function CheckSupport () : boolean {
 		return CheckSupport (false);
 	}
+	
+	function CheckResources () : boolean {
+		Debug.LogWarning ("CheckResources () for " + this.ToString() + " should be overwritten.");
+		return isSupported;
+	}
+	
+	function Start () {
+		 CheckResources ();
+	}	
 		
 	function CheckSupport (needDepth : boolean) : boolean {
+		isSupported = true;
+		supportHDRTextures = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBHalf);
+		supportDX11 = SystemInfo.graphicsShaderLevel >= 50 && SystemInfo.supportsComputeShaders;
+		
 		if (!SystemInfo.supportsImageEffects || !SystemInfo.supportsRenderTextures) {
 			NotSupported ();
 			return false;
@@ -66,12 +86,35 @@ class PostEffectsBase extends MonoBehaviour {
 			return false;
 		}
 		
+		if(needDepth)
+			GetComponent.<Camera>().depthTextureMode |= DepthTextureMode.Depth;	
+		
 		return true;
 	}
+
+	function CheckSupport (needDepth : boolean, needHdr : boolean) : boolean {
+		if(!CheckSupport(needDepth))
+			return false;
+		
+		if(needHdr && !supportHDRTextures) {
+			NotSupported ();
+			return false;		
+		}
+		
+		return true;
+	}	
 	
+	function Dx11Support() : boolean {
+		return supportDX11;
+	}
+
+	function ReportAutoDisable () {
+		Debug.LogWarning ("The image effect " + this.ToString() + " has been disabled as it's not supported on the current platform.");
+	}
+			
 	// deprecated but needed for old effects to survive upgrading
 	function CheckShader (s : Shader) : boolean {
-		Debug.Log("The shader " + s.ToString () + " on effect "+this.ToString () + " is not part of the Unity 3.2 effects suite anymore. For best performance and quality, please ensure you are using the latest Standard Assets Image Effects (Pro only) package.");		
+		Debug.Log("The shader " + s.ToString () + " on effect "+ this.ToString () + " is not part of the Unity 3.2+ effects suite anymore. For best performance and quality, please ensure you are using the latest Standard Assets Image Effects (Pro only) package.");		
 		if (!s.isSupported) {
 			NotSupported ();
 			return false;
@@ -82,8 +125,8 @@ class PostEffectsBase extends MonoBehaviour {
 	}
 	
 	function NotSupported () {
-		Debug.LogError("The image effect " + this.ToString() + "is not supported on this platform!");
 		enabled = false;
+		isSupported = false;
 		return;
 	}
 	

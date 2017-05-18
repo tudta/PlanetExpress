@@ -1,7 +1,7 @@
 
 #pragma strict
 @script ExecuteInEditMode
-@script AddComponentMenu ("Image Effects/Color Correction")
+@script AddComponentMenu ("Image Effects/Color Adjustments/Color Correction (Curves, Saturation)")
 
 enum ColorCorrectionMode {
 	Simple = 0,
@@ -29,6 +29,8 @@ class ColorCorrectionCurves extends PostEffectsBase
 	private var rgbDepthChannelTex : Texture2D;
 	private var zCurveTex : Texture2D;
 	
+	public var saturation : float = 1.0f;
+
 	public var selectiveCc : boolean = false;
 	
 	public var selectiveFromColor : Color = Color.white;
@@ -45,25 +47,25 @@ class ColorCorrectionCurves extends PostEffectsBase
 	private var updateTexturesOnStartup : boolean = true;
 		
 	function Start () {
-		CheckSupport (true);
+		super ();
 		updateTexturesOnStartup = true;
 	}
 	
-	function Awake () {
-		
-	}
+	function Awake () {	}
 	
-	function CreateMaterials () {
+	function CheckResources () : boolean {		
+		CheckSupport (mode == ColorCorrectionMode.Advanced);
+	
 		ccMaterial = CheckShaderAndCreateMaterial (simpleColorCorrectionCurvesShader, ccMaterial);
 		ccDepthMaterial = CheckShaderAndCreateMaterial (colorCorrectionCurvesShader, ccDepthMaterial);
 		selectiveCcMaterial = CheckShaderAndCreateMaterial (colorCorrectionSelectiveShader, selectiveCcMaterial);
 		
 		if (!rgbChannelTex)
-			 rgbChannelTex = new Texture2D (256, 4, TextureFormat.ARGB32, false);
+			 rgbChannelTex = new Texture2D (256, 4, TextureFormat.ARGB32, false, true); 
 		if (!rgbDepthChannelTex)
-			 rgbDepthChannelTex = new Texture2D (256, 4, TextureFormat.ARGB32, false);
+			 rgbDepthChannelTex = new Texture2D (256, 4, TextureFormat.ARGB32, false, true);
 		if (!zCurveTex)
-			 zCurveTex = new Texture2D (256, 1, TextureFormat.ARGB32, false);
+			 zCurveTex = new Texture2D (256, 1, TextureFormat.ARGB32, false, true);
 			 
 		rgbChannelTex.hideFlags = HideFlags.DontSave;
 		rgbDepthChannelTex.hideFlags = HideFlags.DontSave;
@@ -71,16 +73,17 @@ class ColorCorrectionCurves extends PostEffectsBase
 			
 		rgbChannelTex.wrapMode = TextureWrapMode.Clamp;
 		rgbDepthChannelTex.wrapMode = TextureWrapMode.Clamp;
-		zCurveTex.wrapMode = TextureWrapMode.Clamp;				
-	}
-	
-	function OnEnable () {
-		if(useDepthCorrection)
-			GetComponent.<Camera>().depthTextureMode |= DepthTextureMode.Depth;	
-	}
+		zCurveTex.wrapMode = TextureWrapMode.Clamp;	
+					
+		if(!isSupported)
+			ReportAutoDisable ();
+		return isSupported;		  
+	}	
 	
 	public function UpdateParameters () 
-	{			
+	{
+		CheckResources(); // textures might not be created if we're tweaking UI while disabled
+		
 		if (redChannel && greenChannel && blueChannel) {		
 			for (var i : float = 0.0f; i <= 1.0f; i += 1.0f / 255.0f) {
 				var rCh : float = Mathf.Clamp (redChannel.Evaluate(i), 0.0f, 1.0f);
@@ -115,7 +118,10 @@ class ColorCorrectionCurves extends PostEffectsBase
 	}
 	
 	function OnRenderImage (source : RenderTexture, destination : RenderTexture) {
-		CreateMaterials ();
+		if(CheckResources()==false) {
+			Graphics.Blit (source, destination);
+			return;
+		}
 		
 		if (updateTexturesOnStartup) {
 			UpdateParameters ();
@@ -135,11 +141,14 @@ class ColorCorrectionCurves extends PostEffectsBase
 			ccDepthMaterial.SetTexture ("_RgbTex", rgbChannelTex);
 			ccDepthMaterial.SetTexture ("_ZCurve", zCurveTex);
 			ccDepthMaterial.SetTexture ("_RgbDepthTex", rgbDepthChannelTex);
+			ccDepthMaterial.SetFloat ("_Saturation", saturation);
 	
 			Graphics.Blit (source, renderTarget2Use, ccDepthMaterial); 	
 		} 
 		else {
 			ccMaterial.SetTexture ("_RgbTex", rgbChannelTex);
+			ccMaterial.SetFloat ("_Saturation", saturation);
+			
 			Graphics.Blit (source, renderTarget2Use, ccMaterial); 			
 		}
 		

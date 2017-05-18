@@ -3,12 +3,16 @@ using System.Collections;
 
 public class GameUnit : MonoBehaviour {
     [SerializeField] private int team = 0;
-    [SerializeField] private int health = 0;
+    [SerializeField] private int currentHealth = 0;
+    [SerializeField] private int maxHealth = 0;
     [SerializeField] private GameUnitTypes gUnitType = GameUnitTypes.NONE;
+    [SerializeField] private Sprite unitPortrait = null;
 
     public int Team {get{return team;} set{team = value;}}
-    public int Health {get{return health;} set{health = value;}}
+    public int Health {get{return currentHealth;} set{currentHealth = value;}}
+    public int MaxHealth {get{return maxHealth;} set{maxHealth = value;}}
     public GameUnitTypes GUnitType {get{return gUnitType;} set{gUnitType = value;}}
+    public Sprite UnitPortrait {get{return unitPortrait;} set{unitPortrait = value;}}
 
     public virtual void Awake() {
 
@@ -25,8 +29,8 @@ public class GameUnit : MonoBehaviour {
 	}
 
     public virtual void ApplyDamage(int damage) {
-        health -= damage;
-        if (health <= 0) {
+        currentHealth -= damage;
+        if (currentHealth <= 0) {
             Destroy(gameObject);
         }
     }

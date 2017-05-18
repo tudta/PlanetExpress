@@ -1,5 +1,3 @@
-
-
 Shader "Hidden/GlobalFog" {
 Properties {
 	_MainTex ("Base (RGB)", 2D) = "black" {}
@@ -10,7 +8,7 @@ CGINCLUDE
 	#include "UnityCG.cginc"
 
 	uniform sampler2D _MainTex;
-	uniform sampler2D _CameraDepthTexture;
+	uniform sampler2D_float _CameraDepthTexture;
 	
 	uniform float _GlobalDensity;
 	uniform float4 _FogColor;
@@ -24,9 +22,10 @@ CGINCLUDE
 	uniform float4 _CameraWS;
 	 
 	struct v2f {
-		float4 pos : POSITION;
+		float4 pos : SV_POSITION;
 		float2 uv : TEXCOORD0;
-		float4 interpolatedRay : TEXCOORD1;
+		float2 uv_depth : TEXCOORD1;
+		float4 interpolatedRay : TEXCOORD2;
 	};
 	
 	v2f vert( appdata_img v )
@@ -36,8 +35,9 @@ CGINCLUDE
 		v.vertex.z = 0.1;
 		o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
 		o.uv = v.texcoord.xy;
+		o.uv_depth = v.texcoord.xy;
 		
-		#if SHADER_API_D3D9
+		#if UNITY_UV_STARTS_AT_TOP
 		if (_MainTex_TexelSize.y < 0)
 			o.uv.y = 1-o.uv.y;
 		#endif				
@@ -51,39 +51,39 @@ CGINCLUDE
 	float ComputeFogForYAndDistance (in float3 camDir, in float3 wsPos) 
 	{
 		float fogInt = saturate(length(camDir) * _StartDistance.x-1.0) * _StartDistance.y;	
-		float fogVert = (_Y.x-wsPos.y) * _Y.y;
+		float fogVert = max(0.0, (wsPos.y-_Y.x) * _Y.y);
 		fogVert *= fogVert; 
 		return  (1-exp(-_GlobalDensity*fogInt)) * exp (-fogVert);
 	}
 	
-	half4 fragAbsoluteYAndDistance (v2f i) : COLOR
+	half4 fragAbsoluteYAndDistance (v2f i) : SV_Target
 	{
-		float dpth = Linear01Depth (tex2D(_CameraDepthTexture,i.uv).x);
+		float dpth = Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,i.uv_depth));
 		float4 wsDir = dpth * i.interpolatedRay;
 		float4 wsPos = _CameraWS + wsDir;
 		return lerp(tex2D(_MainTex, i.uv), _FogColor, ComputeFogForYAndDistance(wsDir.xyz,wsPos.xyz));
 	}
 
-	half4 fragRelativeYAndDistance (v2f i) : COLOR
+	half4 fragRelativeYAndDistance (v2f i) : SV_Target
 	{
-		float dpth = Linear01Depth (tex2D(_CameraDepthTexture,i.uv).x);
+		float dpth = Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,i.uv_depth));
 		float4 wsDir = dpth * i.interpolatedRay;
 		return lerp(tex2D(_MainTex, i.uv), _FogColor, ComputeFogForYAndDistance(wsDir.xyz, wsDir.xyz));
 	}
 
-	half4 fragAbsoluteY (v2f i) : COLOR
+	half4 fragAbsoluteY (v2f i) : SV_Target
 	{
-		float dpth = Linear01Depth (tex2D (_CameraDepthTexture, i.uv).x);
+		float dpth = Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,i.uv_depth));
 		float4 wsPos = (_CameraWS + dpth * i.interpolatedRay);
-		float fogVert = (_Y.x-wsPos.y) * _Y.y;
+		float fogVert = max(0.0, (wsPos.y-_Y.x) * _Y.y);
 		fogVert *= fogVert; 
 		fogVert = (exp (-fogVert));
 		return lerp(tex2D( _MainTex, i.uv ), _FogColor, fogVert);				
 	}
 
-	half4 fragDistance (v2f i) : COLOR
+	half4 fragDistance (v2f i) : SV_Target
 	{
-		float dpth = Linear01Depth (tex2D (_CameraDepthTexture, i.uv).x);		
+		float dpth = Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,i.uv_depth));		
 		float4 camDir = ( /*_CameraWS  + */ dpth * i.interpolatedRay);
 		float fogInt = saturate(length( camDir ) * _StartDistance.x - 1.0) * _StartDistance.y;	
 		return lerp(_FogColor, tex2D(_MainTex, i.uv), exp(-_GlobalDensity*fogInt));				
@@ -101,6 +101,7 @@ SubShader {
 		#pragma vertex vert
 		#pragma fragment fragAbsoluteYAndDistance
 		#pragma fragmentoption ARB_precision_hint_fastest 
+		#pragma exclude_renderers flash
 		
 		ENDCG
 	}
@@ -114,6 +115,7 @@ SubShader {
 		#pragma vertex vert
 		#pragma fragment fragAbsoluteY
 		#pragma fragmentoption ARB_precision_hint_fastest 
+		#pragma exclude_renderers flash
 		
 		ENDCG
 	}
@@ -127,6 +129,7 @@ SubShader {
 		#pragma vertex vert
 		#pragma fragment fragDistance
 		#pragma fragmentoption ARB_precision_hint_fastest 
+		#pragma exclude_renderers flash
 		
 		ENDCG
 	}
@@ -140,6 +143,7 @@ SubShader {
 		#pragma vertex vert
 		#pragma fragment fragRelativeYAndDistance
 		#pragma fragmentoption ARB_precision_hint_fastest 
+		#pragma exclude_renderers flash
 		
 		ENDCG
 	}
