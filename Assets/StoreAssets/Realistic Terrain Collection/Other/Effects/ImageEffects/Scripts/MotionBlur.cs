@@ -6,7 +6,7 @@ using UnityEngine;
 // The effect works by accumulating the previous frames in an accumulation
 // texture.
 [ExecuteInEditMode]
-[AddComponentMenu("Image Effects/Motion Blur (Color Accumulation)")]
+[AddComponentMenu("Image Effects/Blur/Motion Blur (Color Accumulation)")]
 [RequireComponent(typeof(Camera))]
 
 public class MotionBlur : ImageEffectBase
@@ -16,7 +16,7 @@ public class MotionBlur : ImageEffectBase
 	
 	private RenderTexture accumTexture;
 	
-	protected new void Start()
+	override protected void Start()
 	{
 		if(!SystemInfo.supportsRenderTextures)
 		{
@@ -26,7 +26,7 @@ public class MotionBlur : ImageEffectBase
 		base.Start();
 	}
 	
-	protected new void OnDisable()
+	override protected void OnDisable()
 	{
 		base.OnDisable();
 		DestroyImmediate(accumTexture);
@@ -48,6 +48,7 @@ public class MotionBlur : ImageEffectBase
 		if (extraBlur)
 		{
 			RenderTexture blurbuffer = RenderTexture.GetTemporary(source.width/4, source.height/4, 0);
+			accumTexture.MarkRestoreExpected();
 			Graphics.Blit(accumTexture, blurbuffer);
 			Graphics.Blit(blurbuffer,accumTexture);
 			RenderTexture.ReleaseTemporary(blurbuffer);
@@ -60,6 +61,10 @@ public class MotionBlur : ImageEffectBase
 		material.SetTexture("_MainTex", accumTexture);
 		material.SetFloat("_AccumOrig", 1.0F-blurAmount);
 		
+		// We are accumulating motion over frames without clear/discard
+		// by design, so silence any performance warnings from Unity
+		accumTexture.MarkRestoreExpected();
+
 		// Render the image using the motion blur shader
 		Graphics.Blit (source, accumTexture, material);
 		Graphics.Blit (accumTexture, destination);

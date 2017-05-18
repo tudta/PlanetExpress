@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 [ExecuteInEditMode]
-[AddComponentMenu("Image Effects/Blur")]
+[AddComponentMenu("Image Effects/Blur/Blur")]
 public class BlurEffect : MonoBehaviour
 {	
 	/// Blur iterations - larger number means more blur.
@@ -19,29 +19,17 @@ public class BlurEffect : MonoBehaviour
 	// Basically it just takes 4 texture samples and averages them.
 	// By applying it repeatedly and spreading out sample locations
 	// we get a Gaussian blur approximation.
-	
-	private static string blurMatString =
-@"Shader ""BlurConeTap"" {
-	Properties { _MainTex ("""", any) = """" {} }
-	SubShader {
-		Pass {
-			ZTest Always Cull Off ZWrite Off Fog { Mode Off }
-			SetTexture [_MainTex] {constantColor (0,0,0,0.25) combine texture * constant alpha}
-			SetTexture [_MainTex] {constantColor (0,0,0,0.25) combine texture * constant + previous}
-			SetTexture [_MainTex] {constantColor (0,0,0,0.25) combine texture * constant + previous}
-			SetTexture [_MainTex] {constantColor (0,0,0,0.25) combine texture * constant + previous}
-		}
-	}
-	Fallback off
-}";
+	 
+	public Shader blurShader = null;	
+
+	//private static string blurMatString =
 
 	static Material m_Material = null;
-	protected static Material material {
+	protected Material material {
 		get {
 			if (m_Material == null) {
-				m_Material = new Material( blurMatString );
-				m_Material.hideFlags = HideFlags.HideAndDontSave;
-				m_Material.shader.hideFlags = HideFlags.HideAndDontSave;
+				m_Material = new Material(blurShader);
+				m_Material.hideFlags = HideFlags.DontSave;
 			}
 			return m_Material;
 		} 
@@ -49,7 +37,6 @@ public class BlurEffect : MonoBehaviour
 	
 	protected void OnDisable() {
 		if( m_Material ) {
-			DestroyImmediate( m_Material.shader );
 			DestroyImmediate( m_Material );
 		}
 	}	
@@ -64,7 +51,7 @@ public class BlurEffect : MonoBehaviour
 			return;
 		}
 		// Disable if the shader can't run on the users graphics card
-		if (!material.shader.isSupported) {
+		if (!blurShader || !material.shader.isSupported) {
 			enabled = false;
 			return;
 		}
@@ -96,28 +83,23 @@ public class BlurEffect : MonoBehaviour
 	
 	// Called by the camera to apply the image effect
 	void OnRenderImage (RenderTexture source, RenderTexture destination) {		
-		RenderTexture buffer = RenderTexture.GetTemporary(source.width/4, source.height/4, 0);
-		RenderTexture buffer2 = RenderTexture.GetTemporary(source.width/4, source.height/4, 0);
+		int rtW = source.width/4;
+		int rtH = source.height/4;
+		RenderTexture buffer = RenderTexture.GetTemporary(rtW, rtH, 0);
 		
 		// Copy source to the 4x4 smaller texture.
 		DownSample4x (source, buffer);
 		
 		// Blur the small texture
-		bool oddEven = true;
 		for(int i = 0; i < iterations; i++)
 		{
-			if( oddEven )
-				FourTapCone (buffer, buffer2, i);
-			else
-				FourTapCone (buffer2, buffer, i);
-			oddEven = !oddEven;
+			RenderTexture buffer2 = RenderTexture.GetTemporary(rtW, rtH, 0);
+			FourTapCone (buffer, buffer2, i);
+			RenderTexture.ReleaseTemporary(buffer);
+			buffer = buffer2;
 		}
-		if( oddEven )
-			Graphics.Blit(buffer, destination);
-		else
-			Graphics.Blit(buffer2, destination);
+		Graphics.Blit(buffer, destination);
 		
 		RenderTexture.ReleaseTemporary(buffer);
-		RenderTexture.ReleaseTemporary(buffer2);
 	}	
 }
