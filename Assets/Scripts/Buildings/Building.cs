@@ -5,6 +5,7 @@ public abstract class Building : GameUnit {
     [SerializeField] private bool canBePlaced = false;
     [SerializeField] private bool isPlaced = false;
     [SerializeField] private bool isBuilt = false;
+    [SerializeField] private NavMeshObstacle obstacle = null;
 
     public bool CanBePlaced {get{return canBePlaced;} set{canBePlaced = value;}}
     public bool IsPlaced {get{return isPlaced;} set{isPlaced = value;}}
@@ -41,12 +42,11 @@ public abstract class Building : GameUnit {
     }
 
     public void PlaceBuilding() {
-        if (CanBePlaced)
-        {
+        if (CanBePlaced) {
+            obstacle.enabled = true;
             IsPlaced = true;
             MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-            foreach (MeshRenderer ren in rens)
-            {
+            foreach (MeshRenderer ren in rens) {
                 ren.material.color = Color.white;
             }
         }

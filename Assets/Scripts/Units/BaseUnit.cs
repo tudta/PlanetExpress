@@ -3,6 +3,7 @@ using System.Collections;
 
 public class BaseUnit : MonoBehaviour
 {
+    [SerializeField] private Player player;
     [SerializeField] private GameUnit gUnit = null;
     [SerializeField]private UnitStates currentState = UnitStates.IDLE;
     private UnitStates lastState = UnitStates.IDLE;
@@ -116,14 +117,14 @@ public class BaseUnit : MonoBehaviour
 
 	// Use this for initialization
 	void Start () {
-        
+        player = Player.Instance;
     }
 
     // Update is called once per frame
     void Update() {
         if (GameManager.Instance.CurrentState == GameStates.PLAY) {
             //Check if player is selecting unit
-            if (ren.isVisible && Input.GetMouseButton(0)) {
+            if (ren.isVisible && player.IsSelecting) {
                 Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
                 camPos.y = Player.InvertMouseY(camPos.y);
                 if (Player.Selection.Contains(camPos) && gUnit.Team == Player.Instance.Team) {
@@ -171,27 +172,27 @@ public class BaseUnit : MonoBehaviour
     }
 
     public void SelectUnit() {
-        if (!Player.Instance.SelectedUnits.Contains(this) && Player.Instance.SelectedUnits.Count < Player.Instance.MaxSelectionCount) {
-            Player.Instance.SelectedUnits.Add(this);
+        if (!player.SelectedUnits.Contains(this) && player.SelectedUnits.Count < player.MaxSelectionCount) {
+            player.SelectedUnits.Add(this);
             isSelected = true;
             ren.material.color = Color.green;
             UIManager.Instance.AddUnitToGroup(this);
-            if (Player.Instance.SelectedUnits.Count == 1)
+            if (player.SelectedUnits.Count == 1)
             {
-                Player.Instance.DesignatedUnit = this;
+                player.DesignatedUnit = this;
             }
         }
     }
 
     public void UnselectUnit() {
-        if (Player.Instance.SelectedUnits.Contains(this)) {
-            Player.Instance.SelectedUnits.Remove(this);
+        if (player.SelectedUnits.Contains(this)) {
+            player.SelectedUnits.Remove(this);
             isSelected = false;
             ren.material.color = Color.white;
             UIManager.Instance.RemoveUnitFromGroup(this);
-            if (Player.Instance.DesignatedUnit == this)
+            if (player.DesignatedUnit == this)
             {
-                Player.Instance.DesignatedUnit = null;
+                player.DesignatedUnit = null;
             }
         }
     }

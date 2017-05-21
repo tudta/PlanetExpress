@@ -1,6 +1,7 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
@@ -12,21 +13,33 @@ public class Player : MonoBehaviour
     private List<BaseUnit> selectedUnits = new List<BaseUnit>();
     [SerializeField] private int maxSelectionCount = 0;
     private BaseUnit designatedUnit = null;
+    private bool isSelecting = false;
     private static Rect selection = new Rect(0, 0, 0, 0);
     private Texture2D selectionVisual;
     private Vector3 startClick = -Vector3.one;
     private GameObject tarBuildingObj;
     private Building tarBuilding;
+    [SerializeField] private int maxPop = 0;
+    [SerializeField] private int currentPop = 0;
+    [SerializeField] private int metalCount = 0;
+    [SerializeField] private int fuelCount = 0;
+    [SerializeField] private int foodCount = 0;
 
     #region Properties
     public static Player Instance {get{return instance;} set{instance = value;}}
     public int Team {get{return team;} set{team = value;}}
+    public bool IsSelecting {get{return isSelecting;} set{isSelecting = value;}}
     public static Rect Selection {get{return selection;} set{selection = value;}}
     public List<BaseUnit> SelectedUnits {get{return selectedUnits;} set{selectedUnits = value;}}
     public int MaxSelectionCount {get{return maxSelectionCount;} set{maxSelectionCount = value;}}
     public BaseUnit DesignatedUnit{get{return designatedUnit;} set{designatedUnit = value;}}
     public GameObject TarBuildingObj {get{return tarBuildingObj;} set{tarBuildingObj = value;}}
     public Building TarBuilding {get{return tarBuilding;} set{tarBuilding = value;}}
+    public int MaxPop {get{return maxPop;} set{maxPop = value;}}
+    public int CurrentPop {get{return currentPop;} set{currentPop = value;}}
+    public int MetalCount {get{return metalCount;} set{metalCount = value;}}
+    public int FuelCount {get{return fuelCount;} set{fuelCount = value;}}
+    public int FoodCount {get{return foodCount;} set{foodCount = value;}}
     #endregion
 
     void Awake() {
@@ -43,25 +56,6 @@ public class Player : MonoBehaviour
 	void Update () {
         CheckInput();
         switch (gm.CurrentState) {
-            case GameStates.PLAY:
-                if (Input.GetMouseButtonDown(0)) {
-                    startClick = Input.mousePosition;
-                }
-                else if (Input.GetMouseButtonUp(0)) {
-                    startClick = -Vector3.one;
-                }
-                if (Input.GetMouseButton(0)) {
-                    selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
-                    if (Selection.width < 0) {
-                        selection.x += Selection.width;
-                        selection.width = -Selection.width;
-                    }
-                    if (Selection.height < 0) {
-                        selection.y += Selection.height;
-                        selection.height = -Selection.height;
-                    }
-                }
-                break;
             case GameStates.BUILD:
                 if (tarBuildingObj != null) {
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -86,23 +80,46 @@ public class Player : MonoBehaviour
             case GameStates.DEFAULT:
                 break;
             case GameStates.PLAY:
-                if (Input.GetMouseButtonDown(1)) {
-                    //print ("Right-Clicked!");
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    RaycastHit hit;
-                    LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
-                    if (Physics.Raycast(ray, out hit, 200, mask)) {
-                        if (selectedUnits.Count == 1) {
-                            selectedUnits[0].MoveTo(hit.point, UnitStates.TRANSIT);
-                        }
-                        if (selectedUnits.Count > 1) {
-                            if (currentForm != null && currentForm.MaxUnitCount >= selectedUnits.Count) {
-                                for (int i = 0; i < selectedUnits.Count; i++) {
-                                    selectedUnits[i].MoveTo(hit.point + currentForm.Positions[i], UnitStates.TRANSIT);
+                if (!EventSystem.current.IsPointerOverGameObject()) {
+                    if (Input.GetMouseButtonDown(0)) {
+                        startClick = Input.mousePosition;
+                        isSelecting = true;
+                    }
+                    if (Input.GetMouseButtonDown(1)) {
+                        //print ("Right-Clicked!");
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        RaycastHit hit;
+                        LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
+                        if (Physics.Raycast(ray, out hit, 200, mask)) {
+                            if (selectedUnits.Count == 1) {
+                                selectedUnits[0].MoveTo(hit.point, UnitStates.TRANSIT);
+                            }
+                            else if (selectedUnits.Count > 1) {
+                                if (currentForm != null && currentForm.MaxUnitCount >= selectedUnits.Count) {
+                                    for (int i = 0; i < selectedUnits.Count; i++) {
+                                        selectedUnits[i].MoveTo(hit.point + currentForm.Positions[i], UnitStates.TRANSIT);
+                                    }
                                 }
                             }
                         }
                     }
+                }
+                if (Input.GetMouseButton(0)) {
+                    if (isSelecting) {
+                        selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
+                        if (Selection.width < 0) {
+                            selection.x += Selection.width;
+                            selection.width = -Selection.width;
+                        }
+                        if (Selection.height < 0) {
+                            selection.y += Selection.height;
+                            selection.height = -Selection.height;
+                        }
+                    }
+                }
+                if (Input.GetMouseButtonUp(0)) {
+                    startClick = -Vector3.one;
+                    isSelecting = false;
                 }
                 if (Input.GetKeyDown(KeyCode.Alpha1)) {
                     if (selectedUnits.Count > 0) {
@@ -145,24 +162,50 @@ public class Player : MonoBehaviour
                 }
                 break;
             case GameStates.BUILD:
-                if (Input.GetMouseButton(0)) {
-                    //Place building
-                    if (tarBuilding.CanBePlaced) {
-                        tarBuilding.PlaceBuilding();
+                // Check if the mouse was clicked over a UI element
+                if (!EventSystem.current.IsPointerOverGameObject()) {
+                    if (Input.GetMouseButtonDown(0)) {
+                        //Place building
+                        if (tarBuilding.CanBePlaced) {
+                            tarBuilding.PlaceBuilding();
+                            //Switch to play mode
+                            SwitchState("PLAY");
+                        }
+                    }
+                    if (Input.GetMouseButtonDown(1)) {
+                        //Destroy building
+                        Destroy(tarBuildingObj);
                         //Switch to play mode
                         SwitchState("PLAY");
                     }
-                }
-                if (Input.GetMouseButton(1)) {
-                    //Destroy building
-                    Destroy(tarBuildingObj);
-                    //Switch to play mode
-                    SwitchState("PLAY");
                 }
                 break;
             case GameStates.PAUSE:
                 break;
         }
+    }
+
+    public bool CanAfford(GameUnit unit) {
+        if (unit.MetalCost <= metalCount && unit.FuelCost <= fuelCount && unit.FoodCost <= foodCount && currentPop + unit.PopCost <= maxPop) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public void PurchaseUnit(GameUnit unit) {
+        metalCount -= unit.MetalCost;
+        fuelCount -= unit.FuelCost;
+        foodCount -= unit.FoodCost;
+        currentPop += unit.PopCost;
+    }
+
+    public void RefundUnit(GameUnit unit) {
+        metalCount += unit.MetalCost;
+        fuelCount += unit.FuelCost;
+        foodCount += unit.FoodCost;
+        currentPop -= unit.PopCost;
     }
 
     public void SetDesignatedUnit(BaseUnit unit) {
