@@ -1,25 +1,20 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class BaseUnit : MonoBehaviour
+public class OffensiveUnit : MonoBehaviour
 {
-    [SerializeField] private Player player;
     [SerializeField] private GameUnit gUnit = null;
     [SerializeField]private UnitStates currentState = UnitStates.IDLE;
     private UnitStates lastState = UnitStates.IDLE;
     [SerializeField] private float movespeed = 0.0f;
-    [SerializeField] private float visionRadius;
     [SerializeField] private int damage = 0;
     [SerializeField] private float attackRange = 0.0f;
     [SerializeField] private float projectileSpeed = 0.0f;
     [SerializeField] private float attackSpeed = 0.0f;
-    [SerializeField] private int unitTier = 0;
     [SerializeField] private GameObject projectile = null;
     [SerializeField] private Transform firePoint = null;
     private bool canFire = true;
     private Transform target = null;
-    private bool isSelected = false;
-    [SerializeField] private MeshRenderer ren;
     [SerializeField] private NavMeshAgent agent = null;
     [SerializeField] private NavMeshObstacle obstacle;
     private bool isChangingAgent = false;
@@ -43,16 +38,6 @@ public class BaseUnit : MonoBehaviour
 
         set {
             movespeed = value;
-        }
-    }
-
-    public float VisionRadius {
-        get {
-            return visionRadius;
-        }
-
-        set {
-            visionRadius = value;
         }
     }
 
@@ -95,19 +80,6 @@ public class BaseUnit : MonoBehaviour
             attackSpeed = value;
         }
     }
-
-    public int UnitTier
-    {
-        get
-        {
-            return unitTier;
-        }
-
-        set
-        {
-            unitTier = value;
-        }
-    }
     #endregion
 
     void Awake() {
@@ -117,23 +89,12 @@ public class BaseUnit : MonoBehaviour
 
 	// Use this for initialization
 	void Start () {
-        player = Player.Instance;
+        gUnit = GetComponent<GameUnit>();
     }
 
     // Update is called once per frame
     void Update() {
         if (GameManager.Instance.CurrentState == GameStates.PLAY) {
-            //Check if player is selecting unit
-            if (ren.isVisible && player.IsSelecting) {
-                Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
-                camPos.y = Player.InvertMouseY(camPos.y);
-                if (Player.Selection.Contains(camPos) && gUnit.Team == Player.Instance.Team) {
-                    SelectUnit();
-                }
-                else {
-                    UnselectUnit();
-                }
-            }
             if (!isChangingAgent) {
                 //UnitState AI
                 switch (currentState) {
@@ -169,32 +130,6 @@ public class BaseUnit : MonoBehaviour
     public void ChangeState(UnitStates state) {
         lastState = currentState;
         currentState = state;
-    }
-
-    public void SelectUnit() {
-        if (!player.SelectedUnits.Contains(this) && player.SelectedUnits.Count < player.MaxSelectionCount) {
-            player.SelectedUnits.Add(this);
-            isSelected = true;
-            ren.material.color = Color.green;
-            UIManager.Instance.AddUnitToGroup(this);
-            if (player.SelectedUnits.Count == 1)
-            {
-                player.DesignatedUnit = this;
-            }
-        }
-    }
-
-    public void UnselectUnit() {
-        if (player.SelectedUnits.Contains(this)) {
-            player.SelectedUnits.Remove(this);
-            isSelected = false;
-            ren.material.color = Color.white;
-            UIManager.Instance.RemoveUnitFromGroup(this);
-            if (player.DesignatedUnit == this)
-            {
-                player.DesignatedUnit = null;
-            }
-        }
     }
 
     private void CheckArrival() {
@@ -283,34 +218,33 @@ public class BaseUnit : MonoBehaviour
     }
 
     public void ScanForEnemiesInVision() {
-        GameUnit gUnit;
-        Collider[] cols = Physics.OverlapSphere(transform.position, VisionRadius);
+        GameUnit unit;
+        Collider[] cols = Physics.OverlapSphere(transform.position, gUnit.VisionRadius);
         foreach (Collider col in cols) {
-            gUnit = col.GetComponent<GameUnit>();
-            if (gUnit != null && gUnit.GUnitType != GameUnitTypes.TERRAIN && gUnit.Team != gUnit.Team) {
-                SetTarget(gUnit.transform);
+            unit = col.GetComponent<GameUnit>();
+            if (unit != null && unit.GUnitType != GameUnitTypes.TERRAIN && unit.Team != gUnit.Team) {
+                SetTarget(unit.transform);
                 break;
             }
         }
     }
 
     public void ScanForEnemiesInAttackRange() {
-        GameUnit gUnit;
+        GameUnit unit;
         Collider[] cols = Physics.OverlapSphere(transform.position, AttackRange);
         foreach (Collider col in cols) {
-            gUnit = GetComponent<GameUnit>();
-            if (gUnit != null && gUnit.GUnitType != GameUnitTypes.TERRAIN && gUnit.Team != gUnit.Team) {
-                SetTarget(gUnit.transform);
+            unit = col.GetComponent<GameUnit>();
+            if (unit != null && unit.GUnitType != GameUnitTypes.TERRAIN && unit.Team != gUnit.Team) {
+                SetTarget(unit.transform);
                 break;
             }
         }
     }
 
     public bool InAttackRange(Transform t) {
-        Vector3 pos = new Vector3(transform.position.x, transform.position.y + 1.0f, transform.position.z);
         Vector3 dir = (t.position - transform.position).normalized;
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, dir, out hit, AttackRange)) {
+        if (Physics.Raycast(firePoint.position, dir, out hit, AttackRange)) {
             if (hit.transform == t) {
                 return true;
             }

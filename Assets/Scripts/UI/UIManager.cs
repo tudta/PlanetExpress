@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -8,13 +9,17 @@ public class UIManager : MonoBehaviour
     private static UIManager instance = null;
     [SerializeField] private List<Button> buildingButtons = new List<Button>();
     [SerializeField] private GameObject groupInfoPanel = null;
+    [SerializeField] private GameObject cmdPanel = null;
     private List<UnitTile> unitTiles = new List<UnitTile>();
     private Player player = null;
     [SerializeField] private Text metalCount = null;
     [SerializeField] private Text fuelCount = null;
     [SerializeField] private Text foodCount = null;
+    [SerializeField] private Text currentTechText = null;
+    [SerializeField] private Text popCountText = null;
     [SerializeField] private Image designatedUnitPortrait = null;
     [SerializeField] private Slider designatedUnitSlider = null;
+    [SerializeField] private Text designatedUnitHealthText = null;
     [SerializeField] private Text designatedUnitName = null;
     [SerializeField] private Text designatedUnitPopCost = null;
     [SerializeField] private Text designatedUnitDamage = null;
@@ -23,11 +28,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text designatedUnitMoveSpeed = null;
     [SerializeField] private Text designatedUnitVisionRadius = null;
     [SerializeField] private Text designatedUnitTier = null;
-    [SerializeField] private List<CommandButton> cmdBtns = new List<CommandButton>();
+    [SerializeField] private List<Button> cmdBtns = new List<Button>();
 
     #region Properties
     public static UIManager Instance {get{return instance;} set{instance = value;}}
-    public List<CommandButton> CmdBtns {get{return cmdBtns;} set{cmdBtns = value;}}
+    public List<Button> CmdBtns {get{return cmdBtns;} set{cmdBtns = value;}}
     #endregion
 
     void Awake() {
@@ -42,13 +47,17 @@ public class UIManager : MonoBehaviour
 	// Update is called once per frame
 	void Update () {
         UpdateResourcePanel();
+        UpdateTechPanel();
+        UpdatePopCount();
         UpdateUnitInfoPanel();
         UpdateGroupInfoPanel();
+        UpdateCommandPanel();
 	}
 
     private void Init() {
         player = Player.Instance;
         unitTiles.AddRange(groupInfoPanel.GetComponentsInChildren<UnitTile>());
+        cmdBtns.AddRange(cmdPanel.GetComponentsInChildren<Button>());
     }
 
     public void ToggleBuildMenu() {
@@ -68,33 +77,92 @@ public class UIManager : MonoBehaviour
         foodCount.text = "Food: " + player.FoodCount;
     }
 
+    public void UpdateTechPanel() {
+        currentTechText.text = "Current Tech:" + "\n";
+        switch (player.TechLevel) {
+            case 1:
+                currentTechText.text += "I";
+                break;
+            case 2:
+                currentTechText.text += "II";
+                break;
+            case 3:
+                currentTechText.text += "III";
+                break;
+            case 4:
+                currentTechText.text += "IV";
+                break;
+            case 5:
+                currentTechText.text += "V";
+                break;
+        }
+    }
+
+    public void UpdatePopCount() {
+        popCountText.text = "Current Pop: " + player.CurrentPop;
+    }
+
     public void UpdateUnitInfoPanel() {
         //Update with info of designated unit
         if (player.DesignatedUnit != null) {
-            if (!designatedUnitPortrait.gameObject.activeSelf)
-            {
-                designatedUnitPortrait.gameObject.SetActive(true);
-                designatedUnitSlider.gameObject.SetActive(true);
-                designatedUnitName.gameObject.SetActive(true);
-                designatedUnitPopCost.gameObject.SetActive(true);
-                designatedUnitDamage.gameObject.SetActive(true);
-                designatedUnitAttackSpeed.gameObject.SetActive(true);
-                designatedUnitAttackRange.gameObject.SetActive(true);
-                designatedUnitMoveSpeed.gameObject.SetActive(true);
-                designatedUnitVisionRadius.gameObject.SetActive(true);
-                designatedUnitTier.gameObject.SetActive(true);
+            if (player.DesignatedUnit.Data.GetType() == typeof(OffensiveUnit) || player.DesignatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+                OffensiveUnit unit = player.DesignatedUnit.GetComponent<OffensiveUnit>();
+                if (!designatedUnitPortrait.gameObject.activeSelf) {
+                    designatedUnitPortrait.gameObject.SetActive(true);
+                    designatedUnitSlider.gameObject.SetActive(true);
+                    designatedUnitHealthText.gameObject.SetActive(true);
+                    designatedUnitName.gameObject.SetActive(true);
+                    designatedUnitPopCost.gameObject.SetActive(true);
+                    designatedUnitDamage.gameObject.SetActive(true);
+                    designatedUnitAttackSpeed.gameObject.SetActive(true);
+                    designatedUnitAttackRange.gameObject.SetActive(true);
+                    designatedUnitMoveSpeed.gameObject.SetActive(true);
+                    designatedUnitVisionRadius.gameObject.SetActive(true);
+                    designatedUnitTier.gameObject.SetActive(true);
+                }
+                if (!designatedUnitDamage.gameObject.activeSelf) {
+                    designatedUnitDamage.gameObject.SetActive(true);
+                    designatedUnitAttackSpeed.gameObject.SetActive(true);
+                    designatedUnitAttackRange.gameObject.SetActive(true);
+                    designatedUnitMoveSpeed.gameObject.SetActive(true);
+                }
+                designatedUnitPortrait.sprite = unit.GUnit.UnitPortrait;
+                designatedUnitSlider.maxValue = unit.GUnit.MaxHealth;
+                designatedUnitSlider.value = unit.GUnit.Health;
+                designatedUnitHealthText.text = "(" + unit.GUnit.Health + "/" + unit.GUnit.MaxHealth + ")";
+                designatedUnitName.text = unit.GUnit.UnitName;
+                designatedUnitPopCost.text = "Population: " + unit.GUnit.PopCost;
+                designatedUnitDamage.text = "Damage: " + unit.Damage;
+                designatedUnitAttackSpeed.text = "Attackspeed: " + unit.AttackSpeed;
+                designatedUnitAttackRange.text = "Range: " + unit.AttackRange;
+                designatedUnitMoveSpeed.text = "Movespeed: " + unit.Movespeed;
+                designatedUnitVisionRadius.text = "Vision Radius: " + unit.GUnit.VisionRadius;
+                designatedUnitTier.text = "Unit Tier: " + unit.GUnit.UnitTier;
             }
-            designatedUnitPortrait.sprite = player.DesignatedUnit.GUnit.UnitPortrait;
-            designatedUnitSlider.maxValue = player.DesignatedUnit.GUnit.MaxHealth;
-            designatedUnitSlider.value = player.DesignatedUnit.GUnit.Health;
-            designatedUnitName.text = player.DesignatedUnit.GUnit.UnitName;
-            designatedUnitPopCost.text = "Population: " + player.DesignatedUnit.GUnit.PopCost;
-            designatedUnitDamage.text = "Damage: " + player.DesignatedUnit.Damage;
-            designatedUnitAttackSpeed.text = "Attackspeed: " + player.DesignatedUnit.AttackSpeed;
-            designatedUnitAttackRange.text = "Range: " + player.DesignatedUnit.AttackRange;
-            designatedUnitMoveSpeed.text = "Movespeed: " + player.DesignatedUnit.Movespeed;
-            designatedUnitVisionRadius.text = "Vision Radius: " + player.DesignatedUnit.VisionRadius;
-            designatedUnitTier.text = "Unit Tier: " + player.DesignatedUnit.UnitTier;
+            else if (player.DesignatedUnit.Data.GetType() == typeof(Building) || player.DesignatedUnit.Data.GetType().IsSubclassOf(typeof(Building))) {
+                Building building = player.DesignatedUnit.GetComponent<Building>();
+                if (!designatedUnitPortrait.gameObject.activeSelf) {
+                    designatedUnitPortrait.gameObject.SetActive(true);
+                    designatedUnitSlider.gameObject.SetActive(true);
+                    designatedUnitHealthText.gameObject.SetActive(true);
+                    designatedUnitName.gameObject.SetActive(true);
+                    designatedUnitVisionRadius.gameObject.SetActive(true);
+                    designatedUnitTier.gameObject.SetActive(true);
+                }
+                if (designatedUnitDamage.gameObject.activeSelf) {
+                    designatedUnitDamage.gameObject.SetActive(false);
+                    designatedUnitAttackSpeed.gameObject.SetActive(false);
+                    designatedUnitAttackRange.gameObject.SetActive(false);
+                    designatedUnitMoveSpeed.gameObject.SetActive(false);
+                }
+                designatedUnitPortrait.sprite = building.GUnit.UnitPortrait;
+                designatedUnitSlider.maxValue = building.GUnit.MaxHealth;
+                designatedUnitSlider.value = building.GUnit.Health;
+                designatedUnitHealthText.text = "(" + building.GUnit.Health + "/" + building.GUnit.MaxHealth + ")";
+                designatedUnitName.text = building.GUnit.UnitName;
+                designatedUnitVisionRadius.text = "Vision Radius: " + building.GUnit.VisionRadius;
+                designatedUnitTier.text = "Unit Tier: " + building.GUnit.UnitTier;
+            }
         }
         else {
             designatedUnitPortrait.gameObject.SetActive(false);
@@ -118,7 +186,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void AddUnitToGroup(BaseUnit unit) {
+    public void AddUnitToGroup(GameUnit unit) {
         foreach (UnitTile tile in unitTiles) {
             if (tile.Unit == null) {
                 tile.Unit = unit;
@@ -128,13 +196,59 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void RemoveUnitFromGroup(BaseUnit unit) {
+    public void RemoveUnitFromGroup(GameUnit unit) {
         foreach (UnitTile tile in unitTiles) {
             if (tile.Unit == unit) {
                 tile.Unit = null;
                 tile.gameObject.SetActive(false);
                 break;
             }
+        }
+    }
+
+    public void UpdateCommandPanel() {
+        DisableCommands();
+        if (player.DesignatedUnit != null) {
+            if (player.DesignatedUnit.Data.GetType() == typeof(OffensiveUnit)) {
+                EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
+                cmdBtns[0].onClick.AddListener(delegate { print("Attack Command Issued!"); });
+                EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
+                cmdBtns[1].onClick.AddListener(delegate { print("Defend Command Issued!"); });
+                EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
+                cmdBtns[2].onClick.AddListener(delegate { print("Patrol Command Issued!"); });
+                EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
+                cmdBtns[3].onClick.AddListener(delegate { print("Stand Guard Command Issued!"); });
+                EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
+                cmdBtns[4].onClick.AddListener(delegate { print("Follow Command Issued!"); });
+                EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
+                cmdBtns[5].onClick.AddListener(delegate { print("Sleep Command Issued!"); });
+            }
+            else if (player.DesignatedUnit.Data.GetType() == typeof(UnitBuilding)) {
+                EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/RallyPoint"), string.Empty);
+                cmdBtns[0].onClick.AddListener(delegate { print("Rally Command Issued!"); });
+                EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Demolish"), string.Empty);
+                cmdBtns[1].onClick.AddListener(delegate { print("Demolish Command Issued!"); });
+            }
+        }
+    }
+
+    private void EnableCommand(Button btn, Sprite spr, string txt) {
+        btn.interactable = true;
+        btn.image.sprite = spr;
+        btn.GetComponentInChildren<Text>().text = txt;
+    }
+
+    private void DisableCommand(Button btn) {
+        btn.interactable = false;
+        btn.image.sprite = null;
+        btn.onClick.RemoveAllListeners();
+    }
+
+    private void DisableCommands() {
+        foreach (Button cmdBtn in cmdBtns) {
+            cmdBtn.interactable = false;
+            cmdBtn.image.sprite = null;
+            cmdBtn.onClick.RemoveAllListeners();
         }
     }
 }
