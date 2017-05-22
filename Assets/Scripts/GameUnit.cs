@@ -18,8 +18,7 @@ public class GameUnit : MonoBehaviour {
     [SerializeField] private Component data = null;
     private Player player = null;
     private bool isSelected = false;
-    [SerializeField]
-    private MeshRenderer ren = null;
+    [SerializeField] private MeshRenderer ren = null;
 
     public int Team {get{return team;} set{team = value;}}
     public int Health {get{return currentHealth;} set{currentHealth = value;}}
@@ -47,7 +46,7 @@ public class GameUnit : MonoBehaviour {
 	// Update is called once per frame
 	public virtual void Update () {
         //Check if player is selecting unit
-        if (ren.isVisible && player.IsSelecting) {
+        if (ren.isVisible && player.IsDragSelecting) {
             Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
             camPos.y = player.InvertMouseY(camPos.y);
             if (player.Selection.Contains(camPos) && team == Player.Instance.Team) {

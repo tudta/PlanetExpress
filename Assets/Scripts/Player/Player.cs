@@ -13,7 +13,14 @@ public class Player : MonoBehaviour
     private List<GameUnit> selectedUnits = new List<GameUnit>();
     [SerializeField] private int maxSelectionCount = 0;
     private GameUnit designatedUnit = null;
-    private bool isSelecting = false;
+    private bool isDragSelecting = false;
+    private bool isAttackTargeting = false;
+    private bool isDefendTargeting = false;
+    private bool isPatrolTargeting = false;
+    private bool isFollowTargeting = false;
+    private bool isGuardTargeting = false;
+    private bool isDoNothingTargeting = false;
+    private bool isRallyPointTargeting = false;
     private Rect selection = new Rect(0, 0, 0, 0);
     private Texture2D selectionVisual;
     private Vector3 startClick = -Vector3.one;
@@ -29,7 +36,14 @@ public class Player : MonoBehaviour
     #region Properties
     public static Player Instance {get{return instance;} set{instance = value;}}
     public int Team {get{return team;} set{team = value;}}
-    public bool IsSelecting {get{return isSelecting;} set{isSelecting = value;}}
+    public bool IsDragSelecting {get{return isDragSelecting;} set{isDragSelecting = value;}}
+    public bool IsAttackTargeting {get{return isAttackTargeting;} set{isAttackTargeting = value;}}
+    public bool IsDefendTargeting {get {return isDefendTargeting;} set{isDefendTargeting = value;}}
+    public bool IsPatrolTargeting {get {return isPatrolTargeting;} set{isPatrolTargeting = value;}}
+    public bool IsFollowTargeting {get {return isFollowTargeting;} set{isFollowTargeting = value;}}
+    public bool IsGuardTargeting {get {return isGuardTargeting;} set{isGuardTargeting = value;}}
+    public bool IsDoNothingTargeting {get{return isDoNothingTargeting;} set{isDoNothingTargeting = value;}}
+    public bool IsRallyPointTargeting {get{return isRallyPointTargeting;} set{isRallyPointTargeting = value;}}
     public Rect Selection {get{return selection;} set{selection = value;}}
     public List<GameUnit> SelectedUnits {get{return selectedUnits;} set{selectedUnits = value;}}
     public int MaxSelectionCount {get{return maxSelectionCount;} set{maxSelectionCount = value;}}
@@ -84,8 +98,9 @@ public class Player : MonoBehaviour
             case GameStates.PLAY:
                 if (!EventSystem.current.IsPointerOverGameObject()) {
                     if (Input.GetMouseButtonDown(0)) {
+                        //ADD SINGLE UNIT LEFT CLICK SELECTION
                         startClick = Input.mousePosition;
-                        isSelecting = true;
+                        isDragSelecting = true;
                     }
                     if (Input.GetMouseButtonDown(1)) {
                         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -128,7 +143,7 @@ public class Player : MonoBehaviour
                     }
                 }
                 if (Input.GetMouseButton(0)) {
-                    if (isSelecting) {
+                    if (isDragSelecting) {
                         selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
                         if (Selection.width < 0) {
                             selection.x += Selection.width;
@@ -142,7 +157,7 @@ public class Player : MonoBehaviour
                 }
                 if (Input.GetMouseButtonUp(0)) {
                     startClick = -Vector3.one;
-                    isSelecting = false;
+                    isDragSelecting = false;
                 }
                 if (Input.GetKeyDown(KeyCode.Alpha1)) {
                     if (selectedUnits.Count > 0 && designatedUnit.Data.GetType() == typeof(OffensiveUnit)) {
