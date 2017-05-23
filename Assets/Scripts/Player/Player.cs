@@ -114,7 +114,7 @@ public class Player : MonoBehaviour
                                 }
                                 else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
                                     UnitBuilding building = selectedUnits[0].GetComponent<UnitBuilding>();
-                                    building.UnitRallyPoint.position = hit.point;
+                                    building.UnitRallyPoint = hit.point;
                                 }
                             }
                             else if (selectedUnits.Count > 1) {
@@ -134,7 +134,7 @@ public class Player : MonoBehaviour
                                     for (int i = 0; i < selectedUnits.Count; i++) {
                                         building = selectedUnits[i].GetComponent<UnitBuilding>();
                                         if (building != null) {
-                                            building.UnitRallyPoint.position = hit.point;
+                                            building.UnitRallyPoint = hit.point;
                                         }
                                     }
                                 }

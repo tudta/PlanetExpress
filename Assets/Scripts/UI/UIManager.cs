@@ -28,6 +28,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text designatedUnitMoveSpeed = null;
     [SerializeField] private Text designatedUnitVisionRadius = null;
     [SerializeField] private Text designatedUnitTier = null;
+    [SerializeField] private Sprite defaultCmdSprite = null;
     [SerializeField] private List<Button> cmdBtns = new List<Button>();
 
     #region Properties
@@ -210,6 +211,7 @@ public class UIManager : MonoBehaviour
         DisableCommands();
         if (player.DesignatedUnit != null) {
             if (player.DesignatedUnit.Data.GetType() == typeof(OffensiveUnit)) {
+                OffensiveUnit unit = player.DesignatedUnit.GetComponent<OffensiveUnit>();
                 EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
                 cmdBtns[0].onClick.AddListener(delegate { print("Attack Command Issued!"); });
                 EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
@@ -224,10 +226,16 @@ public class UIManager : MonoBehaviour
                 cmdBtns[5].onClick.AddListener(delegate { print("Sleep Command Issued!"); });
             }
             else if (player.DesignatedUnit.Data.GetType() == typeof(UnitBuilding)) {
+                UnitBuilding building = player.DesignatedUnit.GetComponent<UnitBuilding>();
                 EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/RallyPoint"), string.Empty);
                 cmdBtns[0].onClick.AddListener(delegate { print("Rally Command Issued!"); });
                 EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Demolish"), string.Empty);
                 cmdBtns[1].onClick.AddListener(delegate { print("Demolish Command Issued!"); });
+                for (int i = 2; i - 2 < building.ProductionUnits.Count; i++)
+                {
+                    EnableCommand(cmdBtns[i], building.ProductionUnits[i - 2].GUnit.UnitPortrait, string.Empty);
+                    cmdBtns[i].onClick.AddListener(delegate { building.AddToBuildQueue(building.ProductionUnits[i - 3]); });
+                }
             }
         }
     }
@@ -241,6 +249,7 @@ public class UIManager : MonoBehaviour
     private void DisableCommand(Button btn) {
         btn.interactable = false;
         btn.image.sprite = null;
+        btn.GetComponentInChildren<Text>().text = string.Empty;
         btn.onClick.RemoveAllListeners();
     }
 
@@ -248,6 +257,7 @@ public class UIManager : MonoBehaviour
         foreach (Button cmdBtn in cmdBtns) {
             cmdBtn.interactable = false;
             cmdBtn.image.sprite = null;
+            cmdBtn.GetComponentInChildren<Text>().text = string.Empty;
             cmdBtn.onClick.RemoveAllListeners();
         }
     }

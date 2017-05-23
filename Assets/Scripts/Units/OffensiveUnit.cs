@@ -84,7 +84,8 @@ public class OffensiveUnit : MonoBehaviour
 
     void Awake() {
         agent.stoppingDistance = 0.0f;
-        StartCoroutine(ToggleAgent(UnitStates.IDLE));
+        agent.avoidancePriority = Random.Range(0, 101);
+        //StartCoroutine(ToggleAgent(UnitStates.IDLE));
     }
 
 	// Use this for initialization
