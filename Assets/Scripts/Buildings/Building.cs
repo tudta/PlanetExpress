@@ -1,22 +1,25 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public abstract class Building : GameUnit {
+public abstract class Building : MonoBehaviour {
+    [SerializeField] private GameUnit gUnit = null;
     [SerializeField] private bool canBePlaced = false;
     [SerializeField] private bool isPlaced = false;
     [SerializeField] private bool isBuilt = false;
+    [SerializeField] private NavMeshObstacle obstacle = null;
 
     public bool CanBePlaced {get{return canBePlaced;} set{canBePlaced = value;}}
     public bool IsPlaced {get{return isPlaced;} set{isPlaced = value;}}
     public bool IsBuilt {get{return isBuilt;} set{isBuilt = value;}}
+    public GameUnit GUnit {get{return gUnit;} set{gUnit = value;}}
 
     // Use this for initialization
-    public override void Start () {
+    public virtual void Start () {
 	
 	}
 	
 	// Update is called once per frame
-	public override void Update () {
+	public virtual void Update () {
 
 	}
 
@@ -41,12 +44,11 @@ public abstract class Building : GameUnit {
     }
 
     public void PlaceBuilding() {
-        if (CanBePlaced)
-        {
+        if (CanBePlaced) {
+            obstacle.enabled = true;
             IsPlaced = true;
             MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-            foreach (MeshRenderer ren in rens)
-            {
+            foreach (MeshRenderer ren in rens) {
                 ren.material.color = Color.white;
             }
         }
