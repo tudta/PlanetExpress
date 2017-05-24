@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject groupInfoPanel = null;
     [SerializeField] private GameObject cmdPanel = null;
     private List<UnitTile> unitTiles = new List<UnitTile>();
+    private GameManager gm = null;
     private Player player = null;
     [SerializeField] private Text metalCount = null;
     [SerializeField] private Text fuelCount = null;
@@ -56,6 +57,7 @@ public class UIManager : MonoBehaviour
 	}
 
     private void Init() {
+        gm = GameManager.Instance;
         player = Player.Instance;
         unitTiles.AddRange(groupInfoPanel.GetComponentsInChildren<UnitTile>());
         cmdBtns.AddRange(cmdPanel.GetComponentsInChildren<Button>());
@@ -224,6 +226,37 @@ public class UIManager : MonoBehaviour
                 cmdBtns[4].onClick.AddListener(delegate { print("Follow Command Issued!"); });
                 EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
                 cmdBtns[5].onClick.AddListener(delegate { print("Sleep Command Issued!"); });
+            }
+            else if (player.DesignatedUnit.Data.GetType() == typeof(WorkerUnit)) {
+                WorkerUnit worker = player.DesignatedUnit.GetComponent<WorkerUnit>();
+                if (!worker.InBuildMenu) {
+                    EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
+                    cmdBtns[0].onClick.AddListener(delegate { print("Attack Command Issued!"); });
+                    EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
+                    cmdBtns[1].onClick.AddListener(delegate { print("Defend Command Issued!"); });
+                    EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
+                    cmdBtns[2].onClick.AddListener(delegate { print("Patrol Command Issued!"); });
+                    EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
+                    cmdBtns[3].onClick.AddListener(delegate { print("Stand Guard Command Issued!"); });
+                    EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
+                    cmdBtns[4].onClick.AddListener(delegate { print("Follow Command Issued!"); });
+                    EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
+                    cmdBtns[5].onClick.AddListener(delegate { print("Sleep Command Issued!"); });
+                    EnableCommand(cmdBtns[6], Resources.Load<Sprite>("CommandSprites/Build"), string.Empty);
+                    cmdBtns[6].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
+                }
+                else {
+                    for (int i = 0; i < worker.BuildingUnits.Count; i++) {
+                        //Populate with building buttons
+                        EnableCommand(cmdBtns[i], worker.BuildingUnits[i].GUnit.UnitPortrait, string.Empty);
+                        cmdBtns[i].onClick.AddListener(delegate { gm.CreateBuilding(worker.BuildingUnits[i].name); });
+                        print(i + " = " + worker.BuildingUnits[i].name + ". Total # of Buildings: " + worker.BuildingUnits.Count);
+                        //ADD LISTENERS TO SPAWN BUILDINGS
+                    }
+                    //Debug.Break();
+                    EnableCommand(cmdBtns[worker.BuildingUnits.Count], Resources.Load<Sprite>("CommandSprites/Cancel"), string.Empty);
+                    cmdBtns[worker.BuildingUnits.Count].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
+                }
             }
             else if (player.DesignatedUnit.Data.GetType() == typeof(UnitBuilding)) {
                 UnitBuilding building = player.DesignatedUnit.GetComponent<UnitBuilding>();

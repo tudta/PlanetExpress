@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
         GameObject tmpGO = (GameObject)Resources.Load(buildingPath + name);
         Building tmpBuilding = tmpGO.GetComponent<Building>();
         if (player.CanAfford(tmpBuilding.GUnit)) {
+            player.PurchaseUnit(tmpBuilding.GUnit);
             tmpGO = Instantiate(tmpGO, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity) as GameObject;
             tmpBuilding = tmpGO.GetComponent<Building>();
             player.TarBuildingObj = tmpGO;

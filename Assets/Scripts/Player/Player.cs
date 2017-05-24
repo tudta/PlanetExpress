@@ -225,6 +225,7 @@ public class Player : MonoBehaviour
                     if (Input.GetMouseButtonDown(1)) {
                         //Destroy building
                         Destroy(tarBuildingObj);
+                        RefundUnit(tarBuilding.GUnit);
                         //Switch to play mode
                         SwitchState("PLAY");
                     }

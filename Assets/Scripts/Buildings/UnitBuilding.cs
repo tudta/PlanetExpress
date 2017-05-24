@@ -22,7 +22,6 @@ public class UnitBuilding : Building {
 	
 	// Update is called once per frame
 	public override void Update () {
-        print(buildQueue.Count);
         if (IsPlaced && buildQueue.Count > 0) {
             ProcessBuildQueue();
         }

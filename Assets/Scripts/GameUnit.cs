@@ -87,6 +87,10 @@ public class GameUnit : MonoBehaviour {
             if (player.DesignatedUnit == this) {
                 player.DesignatedUnit = null;
             }
+            if (data.GetType() == typeof(WorkerUnit)) {
+                WorkerUnit worker = (WorkerUnit)data;
+                worker.InBuildMenu = false;
+            }
         }
     }
 

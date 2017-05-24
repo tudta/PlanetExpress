@@ -23,10 +23,6 @@ public abstract class Building : MonoBehaviour {
 
 	}
 
-    private void Produce() {
-
-    }
-
     private void ValidatePlacement() {
         CanBePlaced = true;
         MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
@@ -55,25 +51,52 @@ public abstract class Building : MonoBehaviour {
     }
 
     private void OnTriggerEnter(Collider other) {
-        if (IsPlaced == false) {
-            if (CanBePlaced) {
-                InvalidatePlacement();
+        if (!isPlaced) {
+            if (gUnit.Data.GetType() == typeof(ResourceBuilding) && !canBePlaced) {
+                ResourceBuilding rBuilding = (ResourceBuilding)gUnit.Data;
+                ResourceUnit rUnit = other.GetComponent<ResourceUnit>();
+                if (rUnit != null && rUnit.RType == rBuilding.RType) {
+                    ValidatePlacement();
+                }
+            }
+            else {
+                if (CanBePlaced) {
+                    InvalidatePlacement();
+                }
             }
         }
     }
 
     private void OnTriggerStay(Collider other) {
-        if (IsPlaced == false) {
-            if (CanBePlaced) {
-                InvalidatePlacement();
+        if (!isPlaced) {
+            if (gUnit.Data.GetType() == typeof(ResourceBuilding) && !canBePlaced) {
+                ResourceBuilding rBuilding = (ResourceBuilding)gUnit.Data;
+                ResourceUnit rUnit = other.GetComponent<ResourceUnit>();
+                if (rUnit != null && rUnit.RType == rBuilding.RType) {
+                    ValidatePlacement();
+                }
+            }
+            else {
+                if (CanBePlaced) {
+                    InvalidatePlacement();
+                }
             }
         }
     }
 
     private void OnTriggerExit(Collider other) {
-        if (IsPlaced == false) {
-            if (!CanBePlaced) {
-                ValidatePlacement();
+        if (!isPlaced) {
+            if (gUnit.Data.GetType() == typeof(ResourceBuilding) && canBePlaced) {
+                ResourceBuilding rBuilding = (ResourceBuilding)gUnit.Data;
+                ResourceUnit rUnit = other.GetComponent<ResourceUnit>();
+                if (rUnit != null && rUnit.RType == rBuilding.RType) {
+                    InvalidatePlacement();
+                }
+            }
+            else {
+                if (!CanBePlaced) {
+                    ValidatePlacement();
+                }
             }
         }
     }
