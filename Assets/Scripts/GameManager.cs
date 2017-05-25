@@ -26,11 +26,16 @@ public class GameManager : MonoBehaviour
 	}
 
     public void CreateBuilding(string name) {
+        //GameObject tmpGO = null;
         GameObject tmpGO = (GameObject)Resources.Load(buildingPath + name);
-        tmpGO = Instantiate(tmpGO);
         Building tmpBuilding = tmpGO.GetComponent<Building>();
-        player.TarBuildingObj = tmpGO;
-        player.TarBuilding = tmpBuilding;
-        player.SwitchState("BUILD");
+        if (player.CanAfford(tmpBuilding.GUnit)) {
+            player.PurchaseUnit(tmpBuilding.GUnit);
+            tmpGO = Instantiate(tmpGO, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity) as GameObject;
+            tmpBuilding = tmpGO.GetComponent<Building>();
+            player.TarBuildingObj = tmpGO;
+            player.TarBuilding = tmpBuilding;
+            player.SwitchState("BUILD");
+        }
     }
 }

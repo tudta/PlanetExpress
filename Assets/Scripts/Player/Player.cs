@@ -1,26 +1,61 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
     private static Player instance = null;
     private GameManager gm = null;
     [SerializeField] private PlayerCamera cam;
+    [SerializeField] private int team = 0;
     private Formation currentForm = new BoxFormation();
-    private List<BaseUnit> selectedUnits = new List<BaseUnit>();
-    private static Rect selection = new Rect(0, 0, 0, 0);
+    private List<GameUnit> selectedUnits = new List<GameUnit>();
+    [SerializeField] private int maxSelectionCount = 0;
+    private GameUnit designatedUnit = null;
+    private bool isDragSelecting = false;
+    private bool isAttackTargeting = false;
+    private bool isDefendTargeting = false;
+    private bool isPatrolTargeting = false;
+    private bool isFollowTargeting = false;
+    private bool isGuardTargeting = false;
+    private bool isDoNothingTargeting = false;
+    private bool isRallyPointTargeting = false;
+    private Rect selection = new Rect(0, 0, 0, 0);
     private Texture2D selectionVisual;
     private Vector3 startClick = -Vector3.one;
     private GameObject tarBuildingObj;
     private Building tarBuilding;
+    [SerializeField] private int techLevel = 1;
+    [SerializeField] private int maxPop = 0;
+    [SerializeField] private int currentPop = 0;
+    [SerializeField] private int metalCount = 0;
+    [SerializeField] private int fuelCount = 0;
+    [SerializeField] private int foodCount = 0;
 
     #region Properties
     public static Player Instance {get{return instance;} set{instance = value;}}
-    public static Rect Selection {get{return selection;} set{selection = value;}}
-    public List<BaseUnit> SelectedUnits {get{return selectedUnits;} set{selectedUnits = value;}}
+    public int Team {get{return team;} set{team = value;}}
+    public bool IsDragSelecting {get{return isDragSelecting;} set{isDragSelecting = value;}}
+    public bool IsAttackTargeting {get{return isAttackTargeting;} set{isAttackTargeting = value;}}
+    public bool IsDefendTargeting {get {return isDefendTargeting;} set{isDefendTargeting = value;}}
+    public bool IsPatrolTargeting {get {return isPatrolTargeting;} set{isPatrolTargeting = value;}}
+    public bool IsFollowTargeting {get {return isFollowTargeting;} set{isFollowTargeting = value;}}
+    public bool IsGuardTargeting {get {return isGuardTargeting;} set{isGuardTargeting = value;}}
+    public bool IsDoNothingTargeting {get{return isDoNothingTargeting;} set{isDoNothingTargeting = value;}}
+    public bool IsRallyPointTargeting {get{return isRallyPointTargeting;} set{isRallyPointTargeting = value;}}
+    public Rect Selection {get{return selection;} set{selection = value;}}
+    public List<GameUnit> SelectedUnits {get{return selectedUnits;} set{selectedUnits = value;}}
+    public int MaxSelectionCount {get{return maxSelectionCount;} set{maxSelectionCount = value;}}
+    public GameUnit DesignatedUnit{get{return designatedUnit;} set{designatedUnit = value;}}
     public GameObject TarBuildingObj {get{return tarBuildingObj;} set{tarBuildingObj = value;}}
     public Building TarBuilding {get{return tarBuilding;} set{tarBuilding = value;}}
+    public int MaxPop {get{return maxPop;} set{maxPop = value;}}
+    public int CurrentPop {get{return currentPop;} set{currentPop = value;}}
+    public int MetalCount {get{return metalCount;} set{metalCount = value;}}
+    public int FuelCount {get{return fuelCount;} set{fuelCount = value;}}
+    public int FoodCount {get{return foodCount;} set{foodCount = value;}}
+    public int TechLevel {get{return techLevel;} set{techLevel = value;}}
     #endregion
 
     void Awake() {
@@ -37,25 +72,6 @@ public class Player : MonoBehaviour
 	void Update () {
         CheckInput();
         switch (gm.CurrentState) {
-            case GameStates.PLAY:
-                if (Input.GetMouseButtonDown(0)) {
-                    startClick = Input.mousePosition;
-                }
-                else if (Input.GetMouseButtonUp(0)) {
-                    startClick = -Vector3.one;
-                }
-                if (Input.GetMouseButton(0)) {
-                    selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
-                    if (Selection.width < 0) {
-                        selection.x += Selection.width;
-                        selection.width = -Selection.width;
-                    }
-                    if (Selection.height < 0) {
-                        selection.y += Selection.height;
-                        selection.height = -Selection.height;
-                    }
-                }
-                break;
             case GameStates.BUILD:
                 if (tarBuildingObj != null) {
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -80,78 +96,139 @@ public class Player : MonoBehaviour
             case GameStates.DEFAULT:
                 break;
             case GameStates.PLAY:
-                if (Input.GetMouseButtonDown(1)) {
-                    //print ("Right-Clicked!");
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    RaycastHit hit;
-                    LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
-                    if (Physics.Raycast(ray, out hit, 200, mask)) {
-                        if (selectedUnits.Count == 1) {
-                            selectedUnits[0].MoveTo(hit.point, UnitStates.TRANSIT);
-                        }
-                        if (selectedUnits.Count > 1) {
-                            if (currentForm != null && currentForm.MaxUnitCount >= selectedUnits.Count) {
-                                for (int i = 0; i < selectedUnits.Count; i++) {
-                                    selectedUnits[i].MoveTo(hit.point + currentForm.Positions[i], UnitStates.TRANSIT);
+                if (!EventSystem.current.IsPointerOverGameObject()) {
+                    if (Input.GetMouseButtonDown(0)) {
+                        //ADD SINGLE UNIT LEFT CLICK SELECTION
+                        startClick = Input.mousePosition;
+                        isDragSelecting = true;
+                    }
+                    if (Input.GetMouseButtonDown(1)) {
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        RaycastHit hit;
+                        LayerMask mask = 1 << LayerMask.NameToLayer("Ground");
+                        if (Physics.Raycast(ray, out hit, 200, mask)) {
+                            if (selectedUnits.Count == 1) {
+                                if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+                                    OffensiveUnit unit = selectedUnits[0].GetComponent<OffensiveUnit>();
+                                    unit.MoveTo(hit.point, UnitStates.TRANSIT);
+                                }
+                                else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+                                    UnitBuilding building = selectedUnits[0].GetComponent<UnitBuilding>();
+                                    building.UnitRallyPoint = hit.point;
+                                }
+                            }
+                            else if (selectedUnits.Count > 1) {
+                                if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+                                    if (currentForm != null && currentForm.MaxUnitCount >= selectedUnits.Count) {
+                                        OffensiveUnit unit = null;
+                                        for (int i = 0; i < selectedUnits.Count; i++) {
+                                            unit = selectedUnits[i].GetComponent<OffensiveUnit>();
+                                            if (unit != null) {
+                                                unit.MoveTo(hit.point + currentForm.Positions[i], UnitStates.TRANSIT);
+                                            }
+                                        }
+                                    }
+                                }
+                                else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+                                    UnitBuilding building = null;
+                                    for (int i = 0; i < selectedUnits.Count; i++) {
+                                        building = selectedUnits[i].GetComponent<UnitBuilding>();
+                                        if (building != null) {
+                                            building.UnitRallyPoint = hit.point;
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                if (Input.GetMouseButton(0)) {
+                    if (isDragSelecting) {
+                        selection = new Rect(startClick.x, InvertMouseY(startClick.y), Input.mousePosition.x - startClick.x, InvertMouseY(Input.mousePosition.y) - InvertMouseY(startClick.y));
+                        if (Selection.width < 0) {
+                            selection.x += Selection.width;
+                            selection.width = -Selection.width;
+                        }
+                        if (Selection.height < 0) {
+                            selection.y += Selection.height;
+                            selection.height = -Selection.height;
+                        }
+                    }
+                }
+                if (Input.GetMouseButtonUp(0)) {
+                    startClick = -Vector3.one;
+                    isDragSelecting = false;
+                }
                 if (Input.GetKeyDown(KeyCode.Alpha1)) {
-                    if (selectedUnits.Count > 0) {
+                    if (selectedUnits.Count > 0 && designatedUnit.Data.GetType() == typeof(OffensiveUnit)) {
                         currentForm = new LineFormation();
+                        OffensiveUnit unit = null;
                         Vector3 cenPos = Vector3.zero;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
                         cenPos /= selectedUnits.Count - 1;
                         for (int i = 0; i < selectedUnits.Count; i++) {
-                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
+                            unit = selectedUnits[i].GetComponent<OffensiveUnit>();
+                            if (unit != null) {
+                                unit.MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
+                            }
                         }
                     }
                 }
                 if (Input.GetKeyDown(KeyCode.Alpha2)) {
                     if (selectedUnits.Count > 0) {
                         currentForm = new ZipperFormation();
+                        OffensiveUnit unit = null;
                         Vector3 cenPos = Vector3.zero;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
                         cenPos /= selectedUnits.Count - 1;
                         for (int i = 0; i < selectedUnits.Count; i++) {
-                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
+                            unit = selectedUnits[i].GetComponent<OffensiveUnit>();
+                            if (unit != null) {
+                                unit.MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
+                            }
                         }
                     }
                 }
                 if (Input.GetKeyDown(KeyCode.Alpha3)) {
                     if (selectedUnits.Count > 0) {
                         currentForm = new BoxFormation();
+                        OffensiveUnit unit = null;
                         Vector3 cenPos = Vector3.zero;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
                         cenPos /= selectedUnits.Count - 1;
                         for (int i = 0; i < selectedUnits.Count; i++) {
-                            selectedUnits[i].MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
+                            unit = selectedUnits[i].GetComponent<OffensiveUnit>();
+                            if (unit != null) {
+                                unit.MoveTo(cenPos + currentForm.Positions[i], UnitStates.TRANSIT);
+                            }
                         }
                     }
                 }
                 break;
             case GameStates.BUILD:
-                if (Input.GetMouseButton(0)) {
-                    //Place building
-                    if (tarBuilding.CanBePlaced) {
-                        tarBuilding.PlaceBuilding();
+                // Check if the mouse was clicked over a UI element
+                if (!EventSystem.current.IsPointerOverGameObject()) {
+                    if (Input.GetMouseButtonDown(0)) {
+                        //Place building
+                        if (tarBuilding.CanBePlaced) {
+                            tarBuilding.PlaceBuilding();
+                            //Switch to play mode
+                            SwitchState("PLAY");
+                        }
+                    }
+                    if (Input.GetMouseButtonDown(1)) {
+                        //Destroy building
+                        Destroy(tarBuildingObj);
+                        RefundUnit(tarBuilding.GUnit);
                         //Switch to play mode
                         SwitchState("PLAY");
                     }
-                }
-                if (Input.GetMouseButton(1)) {
-                    //Destroy building
-                    Destroy(tarBuildingObj);
-                    //Switch to play mode
-                    SwitchState("PLAY");
                 }
                 break;
             case GameStates.PAUSE:
@@ -159,11 +236,38 @@ public class Player : MonoBehaviour
         }
     }
 
+    public bool CanAfford(GameUnit unit) {
+        if (unit.MetalCost <= metalCount && unit.FuelCost <= fuelCount && unit.FoodCost <= foodCount && currentPop + unit.PopCost <= maxPop) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public void PurchaseUnit(GameUnit unit) {
+        metalCount -= unit.MetalCost;
+        fuelCount -= unit.FuelCost;
+        foodCount -= unit.FoodCost;
+        currentPop += unit.PopCost;
+    }
+
+    public void RefundUnit(GameUnit unit) {
+        metalCount += unit.MetalCost;
+        fuelCount += unit.FuelCost;
+        foodCount += unit.FoodCost;
+        currentPop -= unit.PopCost;
+    }
+
+    public void SetDesignatedUnit(GameUnit unit) {
+        designatedUnit = unit;
+    }
+
     public void SwitchState(string stateName) {
         gm.CurrentState = (GameStates)System.Enum.Parse(typeof(GameStates), stateName);
     }
 
-    public static float InvertMouseY(float y) {
+    public float InvertMouseY(float y) {
         return Screen.height - y;
     }
 

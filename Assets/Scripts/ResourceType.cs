@@ -1,0 +1,1 @@
+﻿public enum ResourceType {NONE, FOOD, FUEL, METAL}
