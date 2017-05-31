@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject groupInfoPanel = null;
     [SerializeField] private GameObject cmdPanel = null;
     private List<UnitTile> unitTiles = new List<UnitTile>();
+    private GameManager gm = null;
     private Player player = null;
     [SerializeField] private Text metalCount = null;
     [SerializeField] private Text fuelCount = null;
@@ -56,6 +57,7 @@ public class UIManager : MonoBehaviour
 	}
 
     private void Init() {
+        gm = GameManager.Instance;
         player = Player.Instance;
         unitTiles.AddRange(groupInfoPanel.GetComponentsInChildren<UnitTile>());
         cmdBtns.AddRange(cmdPanel.GetComponentsInChildren<Button>());
@@ -213,17 +215,45 @@ public class UIManager : MonoBehaviour
             if (player.DesignatedUnit.Data.GetType() == typeof(OffensiveUnit)) {
                 OffensiveUnit unit = player.DesignatedUnit.GetComponent<OffensiveUnit>();
                 EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
-                cmdBtns[0].onClick.AddListener(delegate { print("Attack Command Issued!"); });
+                cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
                 EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
-                cmdBtns[1].onClick.AddListener(delegate { print("Defend Command Issued!"); });
+                cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DEFEND); });
                 EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
-                cmdBtns[2].onClick.AddListener(delegate { print("Patrol Command Issued!"); });
+                cmdBtns[2].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.PATROL); });
                 EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
-                cmdBtns[3].onClick.AddListener(delegate { print("Stand Guard Command Issued!"); });
+                cmdBtns[3].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.GUARD); });
                 EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
-                cmdBtns[4].onClick.AddListener(delegate { print("Follow Command Issued!"); });
+                cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });
                 EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
-                cmdBtns[5].onClick.AddListener(delegate { print("Sleep Command Issued!"); });
+                cmdBtns[5].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DO_NOTHING); });
+            }
+            else if (player.DesignatedUnit.Data.GetType() == typeof(WorkerUnit)) {
+                WorkerUnit worker = player.DesignatedUnit.GetComponent<WorkerUnit>();
+                if (!worker.InBuildMenu) {
+                    EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
+                    cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
+                    EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
+                    cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DEFEND); });
+                    EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
+                    cmdBtns[2].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.PATROL); });
+                    EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
+                    cmdBtns[3].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.GUARD); });
+                    EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
+                    cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });
+                    EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
+                    cmdBtns[5].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DO_NOTHING); });
+                    EnableCommand(cmdBtns[6], Resources.Load<Sprite>("CommandSprites/Build"), string.Empty);
+                    cmdBtns[6].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
+                }
+                else {
+                    for (int i = 0; i < worker.BuildingUnits.Count; i++) {
+                        int tempInt = i;
+                        EnableCommand(cmdBtns[i], worker.BuildingUnits[i].GUnit.UnitPortrait, string.Empty);
+                        cmdBtns[i].onClick.AddListener(delegate { gm.CreateBuilding(worker.BuildingUnits[tempInt].name); });
+                    }
+                    EnableCommand(cmdBtns[worker.BuildingUnits.Count], Resources.Load<Sprite>("CommandSprites/Cancel"), string.Empty);
+                    cmdBtns[worker.BuildingUnits.Count].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
+                }
             }
             else if (player.DesignatedUnit.Data.GetType() == typeof(UnitBuilding)) {
                 UnitBuilding building = player.DesignatedUnit.GetComponent<UnitBuilding>();
@@ -233,8 +263,9 @@ public class UIManager : MonoBehaviour
                 cmdBtns[1].onClick.AddListener(delegate { print("Demolish Command Issued!"); });
                 for (int i = 2; i - 2 < building.ProductionUnits.Count; i++)
                 {
+                    int tempInt = i;
                     EnableCommand(cmdBtns[i], building.ProductionUnits[i - 2].GUnit.UnitPortrait, string.Empty);
-                    cmdBtns[i].onClick.AddListener(delegate { building.AddToBuildQueue(building.ProductionUnits[i - 3]); });
+                    cmdBtns[i].onClick.AddListener(delegate { building.AddToBuildQueue(building.ProductionUnits[tempInt - 2]); });
                 }
             }
         }

@@ -1,1 +1,1 @@
-﻿public enum UnitStates {IDLE, TRANSIT, ATTACK, PATROL};
+﻿public enum UnitStates {IDLE, TRANSIT, ATTACK, PATROL, DEFEND, FOLLOW, DO_NOTHING, GUARD};

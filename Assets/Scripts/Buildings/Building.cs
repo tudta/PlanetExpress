@@ -15,7 +15,9 @@ public abstract class Building : MonoBehaviour {
 
     // Use this for initialization
     public virtual void Start () {
-	
+        if (!isPlaced) {
+            ValidatePlacement();
+        }
 	}
 	
 	// Update is called once per frame
@@ -23,11 +25,7 @@ public abstract class Building : MonoBehaviour {
 
 	}
 
-    private void Produce() {
-
-    }
-
-    private void ValidatePlacement() {
+    public void ValidatePlacement() {
         CanBePlaced = true;
         MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
         foreach (MeshRenderer ren in rens) {
@@ -35,7 +33,7 @@ public abstract class Building : MonoBehaviour {
         }
     }
 
-    private void InvalidatePlacement() {
+    public void InvalidatePlacement() {
         CanBePlaced = false;
         MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
         foreach (MeshRenderer ren in rens) {
@@ -43,7 +41,7 @@ public abstract class Building : MonoBehaviour {
         }
     }
 
-    public void PlaceBuilding() {
+    public virtual void PlaceBuilding() {
         if (CanBePlaced) {
             obstacle.enabled = true;
             IsPlaced = true;
@@ -54,27 +52,21 @@ public abstract class Building : MonoBehaviour {
         }
     }
 
-    private void OnTriggerEnter(Collider other) {
-        if (IsPlaced == false) {
-            if (CanBePlaced) {
-                InvalidatePlacement();
-            }
+    public virtual void OnTriggerEnter(Collider other) {
+        if (!isPlaced && canBePlaced) {
+            InvalidatePlacement();
         }
     }
 
-    private void OnTriggerStay(Collider other) {
-        if (IsPlaced == false) {
-            if (CanBePlaced) {
-                InvalidatePlacement();
-            }
+    public virtual void OnTriggerStay(Collider other) {
+        if (!isPlaced && canBePlaced) {
+            InvalidatePlacement();
         }
     }
 
-    private void OnTriggerExit(Collider other) {
-        if (IsPlaced == false) {
-            if (!CanBePlaced) {
-                ValidatePlacement();
-            }
+    public virtual void OnTriggerExit(Collider other) {
+        if (!isPlaced && !canBePlaced) {
+            ValidatePlacement();
         }
     }
 }

@@ -16,7 +16,7 @@ public class GameUnit : MonoBehaviour {
     [SerializeField] private int foodCost = 0;
     [SerializeField] private int popCost = 0;
     [SerializeField] private Component data = null;
-    private Player player = null;
+    private Player playerEnt = null;
     private bool isSelected = false;
     [SerializeField] private MeshRenderer ren = null;
 
@@ -33,6 +33,7 @@ public class GameUnit : MonoBehaviour {
     public Component Data {get{return data;} set{data = value;}}
     public int UnitTier {get{return unitTier;} set{unitTier = value;}}
     public float VisionRadius {get{return visionRadius;} set{visionRadius = value;}}
+    public Player PlayerEnt {get{return playerEnt;} set{playerEnt = value;}}
 
     public virtual void Awake() {
 
@@ -40,27 +41,29 @@ public class GameUnit : MonoBehaviour {
 
     // Use this for initialization
     public virtual void Start () {
-        player = Player.Instance;
+        PlayerEnt = Player.Instance;
 	}
 	
 	// Update is called once per frame
 	public virtual void Update () {
         //Check if player is selecting unit
-        if (ren.isVisible && player.IsDragSelecting) {
+        if (ren.isVisible && PlayerEnt.IsDragSelecting) {
             Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
-            camPos.y = player.InvertMouseY(camPos.y);
-            if (player.Selection.Contains(camPos) && team == Player.Instance.Team) {
-                SelectUnit();
+            camPos.y = PlayerEnt.InvertMouseY(camPos.y);
+            if (PlayerEnt.Selection.Contains(camPos) && team == Player.Instance.Team) {
+                if (!isSelected) {
+                    SelectUnit();
+                }
             }
-            else {
+            else if (isSelected) {
                 UnselectUnit();
             }
         }
     }
 
     public void SelectUnit() {
-        if (!player.SelectedUnits.Contains(this) && player.SelectedUnits.Count < player.MaxSelectionCount) {
-            player.SelectedUnits.Add(this);
+        if (!PlayerEnt.SelectedUnits.Contains(this) && PlayerEnt.SelectedUnits.Count < PlayerEnt.MaxSelectionCount) {
+            PlayerEnt.SelectedUnits.Add(this);
             isSelected = true;
             List<MeshRenderer> rens = new List<MeshRenderer>();
             rens.AddRange(GetComponentsInChildren<MeshRenderer>());
@@ -68,15 +71,15 @@ public class GameUnit : MonoBehaviour {
                 mRen.material.color = Color.green;
             }
             UIManager.Instance.AddUnitToGroup(this);
-            if (player.SelectedUnits.Count == 1) {
-                player.DesignatedUnit = this;
+            if (PlayerEnt.SelectedUnits.Count == 1) {
+                PlayerEnt.DesignatedUnit = this;
             }
         }
     }
 
     public void UnselectUnit() {
-        if (player.SelectedUnits.Contains(this)) {
-            player.SelectedUnits.Remove(this);
+        if (PlayerEnt.SelectedUnits.Contains(this)) {
+            PlayerEnt.SelectedUnits.Remove(this);
             isSelected = false;
             List<MeshRenderer> rens = new List<MeshRenderer>();
             rens.AddRange(GetComponentsInChildren<MeshRenderer>());
@@ -84,8 +87,12 @@ public class GameUnit : MonoBehaviour {
                 ren.material.color = Color.white;
             }
             UIManager.Instance.RemoveUnitFromGroup(this);
-            if (player.DesignatedUnit == this) {
-                player.DesignatedUnit = null;
+            if (PlayerEnt.DesignatedUnit == this) {
+                PlayerEnt.DesignatedUnit = null;
+            }
+            if (data.GetType() == typeof(WorkerUnit)) {
+                WorkerUnit worker = (WorkerUnit)data;
+                worker.InBuildMenu = false;
             }
         }
     }
