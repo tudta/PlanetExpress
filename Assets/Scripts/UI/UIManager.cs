@@ -247,13 +247,10 @@ public class UIManager : MonoBehaviour
                 }
                 else {
                     for (int i = 0; i < worker.BuildingUnits.Count; i++) {
-                        //Populate with building buttons
+                        int tempInt = i;
                         EnableCommand(cmdBtns[i], worker.BuildingUnits[i].GUnit.UnitPortrait, string.Empty);
-                        cmdBtns[i].onClick.AddListener(delegate { gm.CreateBuilding(worker.BuildingUnits[i].name); });
-                        print(i + " = " + worker.BuildingUnits[i].name + ". Total # of Buildings: " + worker.BuildingUnits.Count);
-                        //ADD LISTENERS TO SPAWN BUILDINGS
+                        cmdBtns[i].onClick.AddListener(delegate { gm.CreateBuilding(worker.BuildingUnits[tempInt].name); });
                     }
-                    //Debug.Break();
                     EnableCommand(cmdBtns[worker.BuildingUnits.Count], Resources.Load<Sprite>("CommandSprites/Cancel"), string.Empty);
                     cmdBtns[worker.BuildingUnits.Count].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
                 }
@@ -266,8 +263,9 @@ public class UIManager : MonoBehaviour
                 cmdBtns[1].onClick.AddListener(delegate { print("Demolish Command Issued!"); });
                 for (int i = 2; i - 2 < building.ProductionUnits.Count; i++)
                 {
+                    int tempInt = i;
                     EnableCommand(cmdBtns[i], building.ProductionUnits[i - 2].GUnit.UnitPortrait, string.Empty);
-                    cmdBtns[i].onClick.AddListener(delegate { building.AddToBuildQueue(building.ProductionUnits[i - 3]); });
+                    cmdBtns[i].onClick.AddListener(delegate { building.AddToBuildQueue(building.ProductionUnits[tempInt - 2]); });
                 }
             }
         }

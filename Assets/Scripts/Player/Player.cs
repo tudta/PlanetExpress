@@ -259,6 +259,20 @@ public class Player : MonoBehaviour
         currentPop -= unit.PopCost;
     }
 
+    public void AddResources(ResourceType type, int amount) {
+        switch (type) {
+            case ResourceType.FOOD:
+                foodCount += amount;
+                break;
+            case ResourceType.FUEL:
+                fuelCount += amount;
+                break;
+            case ResourceType.METAL:
+                metalCount += amount;
+                break;
+        }
+    }
+
     public void SetDesignatedUnit(GameUnit unit) {
         designatedUnit = unit;
     }
