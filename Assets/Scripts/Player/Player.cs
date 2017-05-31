@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class Player : MonoBehaviour
-{
+public class Player : MonoBehaviour {
     private static Player instance = null;
     private GameManager gm = null;
     [SerializeField] private PlayerCamera cam;
@@ -13,14 +12,11 @@ public class Player : MonoBehaviour
     private List<GameUnit> selectedUnits = new List<GameUnit>();
     [SerializeField] private int maxSelectionCount = 0;
     private GameUnit designatedUnit = null;
+    private List<GameUnit> designatedUnits = new List<GameUnit>();
+    [SerializeField] private Texture2D targetingCursorSprite = null;
     private bool isDragSelecting = false;
-    private bool isAttackTargeting = false;
-    private bool isDefendTargeting = false;
-    private bool isPatrolTargeting = false;
-    private bool isFollowTargeting = false;
-    private bool isGuardTargeting = false;
-    private bool isDoNothingTargeting = false;
-    private bool isRallyPointTargeting = false;
+    private UnitStates targetingState = UnitStates.IDLE;
+    private bool isTargeting = false;
     private Rect selection = new Rect(0, 0, 0, 0);
     private Texture2D selectionVisual;
     private Vector3 startClick = -Vector3.one;
@@ -34,42 +30,36 @@ public class Player : MonoBehaviour
     [SerializeField] private int foodCount = 0;
 
     #region Properties
-    public static Player Instance {get{return instance;} set{instance = value;}}
-    public int Team {get{return team;} set{team = value;}}
-    public bool IsDragSelecting {get{return isDragSelecting;} set{isDragSelecting = value;}}
-    public bool IsAttackTargeting {get{return isAttackTargeting;} set{isAttackTargeting = value;}}
-    public bool IsDefendTargeting {get {return isDefendTargeting;} set{isDefendTargeting = value;}}
-    public bool IsPatrolTargeting {get {return isPatrolTargeting;} set{isPatrolTargeting = value;}}
-    public bool IsFollowTargeting {get {return isFollowTargeting;} set{isFollowTargeting = value;}}
-    public bool IsGuardTargeting {get {return isGuardTargeting;} set{isGuardTargeting = value;}}
-    public bool IsDoNothingTargeting {get{return isDoNothingTargeting;} set{isDoNothingTargeting = value;}}
-    public bool IsRallyPointTargeting {get{return isRallyPointTargeting;} set{isRallyPointTargeting = value;}}
-    public Rect Selection {get{return selection;} set{selection = value;}}
-    public List<GameUnit> SelectedUnits {get{return selectedUnits;} set{selectedUnits = value;}}
-    public int MaxSelectionCount {get{return maxSelectionCount;} set{maxSelectionCount = value;}}
-    public GameUnit DesignatedUnit{get{return designatedUnit;} set{designatedUnit = value;}}
-    public GameObject TarBuildingObj {get{return tarBuildingObj;} set{tarBuildingObj = value;}}
-    public Building TarBuilding {get{return tarBuilding;} set{tarBuilding = value;}}
-    public int MaxPop {get{return maxPop;} set{maxPop = value;}}
-    public int CurrentPop {get{return currentPop;} set{currentPop = value;}}
-    public int MetalCount {get{return metalCount;} set{metalCount = value;}}
-    public int FuelCount {get{return fuelCount;} set{fuelCount = value;}}
-    public int FoodCount {get{return foodCount;} set{foodCount = value;}}
-    public int TechLevel {get{return techLevel;} set{techLevel = value;}}
+    public static Player Instance { get { return instance; } set { instance = value; } }
+    public int Team { get { return team; } set { team = value; } }
+    public bool IsDragSelecting { get { return isDragSelecting; } set { isDragSelecting = value; } }
+    public bool IsTargeting { get { return isTargeting; } set { isTargeting = value; } }
+    public Rect Selection { get { return selection; } set { selection = value; } }
+    public List<GameUnit> SelectedUnits { get { return selectedUnits; } set { selectedUnits = value; } }
+    public int MaxSelectionCount { get { return maxSelectionCount; } set { maxSelectionCount = value; } }
+    public GameUnit DesignatedUnit { get { return designatedUnit; } set { designatedUnit = value; } }
+    public GameObject TarBuildingObj { get { return tarBuildingObj; } set { tarBuildingObj = value; } }
+    public Building TarBuilding { get { return tarBuilding; } set { tarBuilding = value; } }
+    public int MaxPop { get { return maxPop; } set { maxPop = value; } }
+    public int CurrentPop { get { return currentPop; } set { currentPop = value; } }
+    public int MetalCount { get { return metalCount; } set { metalCount = value; } }
+    public int FuelCount { get { return fuelCount; } set { fuelCount = value; } }
+    public int FoodCount { get { return foodCount; } set { foodCount = value; } }
+    public int TechLevel { get { return techLevel; } set { techLevel = value; } }
     #endregion
 
     void Awake() {
         instance = this;
     }
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start() {
         gm = GameManager.Instance;
         selectionVisual = Resources.Load("Images/GoldHighlight") as Texture2D;
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update() {
         CheckInput();
         switch (gm.CurrentState) {
             case GameStates.BUILD:
@@ -98,9 +88,72 @@ public class Player : MonoBehaviour
             case GameStates.PLAY:
                 if (!EventSystem.current.IsPointerOverGameObject()) {
                     if (Input.GetMouseButtonDown(0)) {
-                        //ADD SINGLE UNIT LEFT CLICK SELECTION
-                        startClick = Input.mousePosition;
-                        isDragSelecting = true;
+                        if (isTargeting) {
+                            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                            RaycastHit hit;
+                            LayerMask mask;
+                            switch (targetingState) {
+                                case UnitStates.IDLE:
+                                    mask = 1 << LayerMask.NameToLayer("Ground");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.point);
+                                    }
+                                    break;
+                                case UnitStates.TRANSIT:
+                                    mask = 1 << LayerMask.NameToLayer("Ground");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.point);
+                                    }
+                                    break;
+                                case UnitStates.ATTACK:
+                                    mask = 1 << LayerMask.NameToLayer("Unit");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.transform);
+                                    }
+                                    else {
+                                        mask = 1 << LayerMask.NameToLayer("Ground");
+                                        if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                            SetTarget(hit.point);
+                                        }
+                                    }
+                                    break;
+                                case UnitStates.PATROL:
+                                    mask = 1 << LayerMask.NameToLayer("Ground");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.point);
+                                    }
+                                    break;
+                                case UnitStates.DEFEND:
+                                    mask = 1 << LayerMask.NameToLayer("Ground");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.point);
+                                    }
+                                    break;
+                                case UnitStates.FOLLOW:
+                                    mask = 1 << 1 << LayerMask.NameToLayer("Unit");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.transform);
+                                    }
+                                    break;
+                                case UnitStates.DO_NOTHING:
+                                    mask = 1 << LayerMask.NameToLayer("Ground");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.point);
+                                    }
+                                    break;
+                                case UnitStates.GUARD:
+                                    mask = 1 << LayerMask.NameToLayer("Ground");
+                                    if (Physics.Raycast(ray, out hit, 200, mask)) {
+                                        SetTarget(hit.point);
+                                    }
+                                    break;
+                            }
+                        }
+                        else {
+                            //ADD SINGLE UNIT LEFT CLICK SELECTION
+                            startClick = Input.mousePosition;
+                            isDragSelecting = true;
+                        }
                     }
                     if (Input.GetMouseButtonDown(1)) {
                         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -236,6 +289,62 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void BeginTargeting(UnitStates state) {
+        isTargeting = true;
+        targetingState = state;
+        Cursor.SetCursor(targetingCursorSprite, new Vector2(targetingCursorSprite.width / 2.0f, targetingCursorSprite.height / 2.0f), CursorMode.Auto);
+    }
+
+    public void SetTarget(Vector3 pos) {
+        if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+            OffensiveUnit unit;
+            for (int i = 0; i < selectedUnits.Count; i++) {
+                unit = (OffensiveUnit)selectedUnits[i].Data;
+                if (unit != null) {
+                    unit.MoveTo(pos, targetingState);
+                }
+            }
+        }
+        else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+            UnitBuilding unit;
+            for (int i = 0; i < selectedUnits.Count; i++) {
+                unit = (UnitBuilding)selectedUnits[i].Data;
+                if (unit != null) {
+                    unit.UnitRallyPoint = pos;
+                }
+            }
+        }
+        CancelTargeting();
+    }
+
+    public void SetTarget(Transform trans) {
+        if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+            OffensiveUnit unit;
+            for (int i = 0; i < selectedUnits.Count; i++) {
+                unit = (OffensiveUnit)selectedUnits[i].Data;
+                if (unit != null) {
+                    unit.Target = trans;
+                    unit.MoveTo(trans, targetingState);
+                }
+            }
+        }
+        else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+            UnitBuilding unit;
+            for (int i = 0; i < selectedUnits.Count; i++) {
+                unit = (UnitBuilding)selectedUnits[i].Data;
+                if (unit != null) {
+                    unit.UnitRallyPoint = trans.position;
+                }
+            }
+        }
+        CancelTargeting();
+    }
+
+    public void CancelTargeting() {
+        isTargeting = false;
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+    }
+
     public bool CanAfford(GameUnit unit) {
         if (unit.MetalCost <= metalCount && unit.FuelCost <= fuelCount && unit.FoodCost <= foodCount && currentPop + unit.PopCost <= maxPop) {
             return true;
@@ -257,6 +366,20 @@ public class Player : MonoBehaviour
         fuelCount += unit.FuelCost;
         foodCount += unit.FoodCost;
         currentPop -= unit.PopCost;
+    }
+
+    public void AddResources(ResourceType type, int amount) {
+        switch (type) {
+            case ResourceType.FOOD:
+                foodCount += amount;
+                break;
+            case ResourceType.FUEL:
+                fuelCount += amount;
+                break;
+            case ResourceType.METAL:
+                metalCount += amount;
+                break;
+        }
     }
 
     public void SetDesignatedUnit(GameUnit unit) {

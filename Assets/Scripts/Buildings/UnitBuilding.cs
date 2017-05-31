@@ -18,6 +18,7 @@ public class UnitBuilding : Building {
     // Use this for initialization
     public override void Start () {
         unitRallyPoint = unitSpawnPoint.position;
+        base.Start();
 	}
 	
 	// Update is called once per frame

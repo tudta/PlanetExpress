@@ -80,6 +80,16 @@ public class OffensiveUnit : MonoBehaviour
             attackSpeed = value;
         }
     }
+
+    public Transform Target {
+        get {
+            return target;
+        }
+
+        set {
+            target = value;
+        }
+    }
     #endregion
 
     void Awake() {
@@ -106,16 +116,16 @@ public class OffensiveUnit : MonoBehaviour
                         CheckArrival();
                         break;
                     case UnitStates.ATTACK:
-                        if (target == null) {
+                        if (Target == null) {
                             ChangeState(UnitStates.IDLE);
                         }
                         else {
                             //Attack if in range
-                            if (InAttackRange(target)) {
-                                StartCoroutine(Attack(target));
+                            if (InAttackRange(Target)) {
+                                StartCoroutine(Attack(Target));
                             }
                             else {
-                                MoveTo(target, UnitStates.ATTACK);
+                                MoveTo(Target, UnitStates.ATTACK);
                             }
                         }
                         break;
@@ -259,12 +269,12 @@ public class OffensiveUnit : MonoBehaviour
     }
 
     public void SetTarget(Transform t) {
-        target = t;
+        Target = t;
         if (!agent.enabled) {
-            StartCoroutine(ToggleAgent(target.position, UnitStates.ATTACK));
+            StartCoroutine(ToggleAgent(Target.position, UnitStates.ATTACK));
         }
         else {
-            agent.destination = target.position;
+            agent.destination = Target.position;
             ChangeState(UnitStates.ATTACK);
         }
     }
