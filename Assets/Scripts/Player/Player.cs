@@ -79,9 +79,6 @@ public class Player : MonoBehaviour {
     }
 
     void CheckInput() {
-        if (Input.GetAxis("Mouse ScrollWheel") != 0.0f) {
-            cam.ZoomCamera(Input.GetAxis("Mouse ScrollWheel"));
-        }
         switch (gm.CurrentState) {
             case GameStates.DEFAULT:
                 break;
