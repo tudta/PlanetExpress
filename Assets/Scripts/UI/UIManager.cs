@@ -215,33 +215,33 @@ public class UIManager : MonoBehaviour
             if (player.DesignatedUnit.Data.GetType() == typeof(OffensiveUnit)) {
                 OffensiveUnit unit = player.DesignatedUnit.GetComponent<OffensiveUnit>();
                 EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
-                cmdBtns[0].onClick.AddListener(delegate { print("Attack Command Issued!"); });
+                cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
                 EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
-                cmdBtns[1].onClick.AddListener(delegate { print("Defend Command Issued!"); });
+                cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DEFEND); });
                 EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
-                cmdBtns[2].onClick.AddListener(delegate { print("Patrol Command Issued!"); });
+                cmdBtns[2].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.PATROL); });
                 EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
-                cmdBtns[3].onClick.AddListener(delegate { print("Stand Guard Command Issued!"); });
+                cmdBtns[3].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.GUARD); });
                 EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
-                cmdBtns[4].onClick.AddListener(delegate { print("Follow Command Issued!"); });
+                cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });
                 EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
-                cmdBtns[5].onClick.AddListener(delegate { print("Sleep Command Issued!"); });
+                cmdBtns[5].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DO_NOTHING); });
             }
             else if (player.DesignatedUnit.Data.GetType() == typeof(WorkerUnit)) {
                 WorkerUnit worker = player.DesignatedUnit.GetComponent<WorkerUnit>();
                 if (!worker.InBuildMenu) {
                     EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
-                    cmdBtns[0].onClick.AddListener(delegate { print("Attack Command Issued!"); });
+                    cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
                     EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
-                    cmdBtns[1].onClick.AddListener(delegate { print("Defend Command Issued!"); });
+                    cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DEFEND); });
                     EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
-                    cmdBtns[2].onClick.AddListener(delegate { print("Patrol Command Issued!"); });
+                    cmdBtns[2].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.PATROL); });
                     EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
-                    cmdBtns[3].onClick.AddListener(delegate { print("Stand Guard Command Issued!"); });
+                    cmdBtns[3].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.GUARD); });
                     EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
-                    cmdBtns[4].onClick.AddListener(delegate { print("Follow Command Issued!"); });
+                    cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });
                     EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
-                    cmdBtns[5].onClick.AddListener(delegate { print("Sleep Command Issued!"); });
+                    cmdBtns[5].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DO_NOTHING); });
                     EnableCommand(cmdBtns[6], Resources.Load<Sprite>("CommandSprites/Build"), string.Empty);
                     cmdBtns[6].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
                 }

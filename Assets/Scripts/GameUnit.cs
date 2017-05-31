@@ -51,9 +51,11 @@ public class GameUnit : MonoBehaviour {
             Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
             camPos.y = PlayerEnt.InvertMouseY(camPos.y);
             if (PlayerEnt.Selection.Contains(camPos) && team == Player.Instance.Team) {
-                SelectUnit();
+                if (!isSelected) {
+                    SelectUnit();
+                }
             }
-            else {
+            else if (isSelected) {
                 UnselectUnit();
             }
         }
