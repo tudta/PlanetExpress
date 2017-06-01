@@ -127,7 +127,7 @@ public class PlayerCamera : MonoBehaviour {
 
 	private void SetScrollLimits() {
 		leftScrollLimit = 0;
-		rightScrollLimit = Screen.width;
+		rightScrollLimit = Screen.width - 1;
 		topScrollLimit = Screen.height;
         bottomScrollLimit = 0;
 	}
