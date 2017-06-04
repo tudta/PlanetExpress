@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameStates currentState = GameStates.PLAY;
     private string buildingPath = "Prefabs/";
     private Player player = null;
+    private int numOfEvents = 0;
 
     public static GameManager Instance {get{return instance;} set{instance = value;}}
     public GameStates CurrentState {get{return currentState;} set{currentState = value;}}
@@ -36,6 +37,18 @@ public class GameManager : MonoBehaviour
             player.TarBuildingObj = tmpGO;
             player.TarBuilding = tmpBuilding;
             player.SwitchState("BUILD");
+        }
+    }
+
+    public void CreateRandomEvent() {
+        int i = Random.Range(1, 3);
+        if (i == 1) {
+            //Weather
+            //Choose randomly from list of weather events
+        }
+        else {
+            //SiegeAttempt
+            //Choose randomly from list of siege events
         }
     }
 }
