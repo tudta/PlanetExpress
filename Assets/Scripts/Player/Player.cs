@@ -72,6 +72,7 @@ public class Player : MonoBehaviour {
                         tmpV3 = Camera.main.ScreenToWorldPoint(tmpV3);
                         tmpV3 = new Vector3(tmpV3.x, hit.point.y, tmpV3.z);
                         tarBuildingObj.transform.position = tmpV3;
+                        tarBuildingObj.transform.up = hit.normal;
                     }
                 }
                 break;

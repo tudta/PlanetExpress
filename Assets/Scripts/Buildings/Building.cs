@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public abstract class Building : MonoBehaviour {
     [SerializeField] private GameUnit gUnit = null;
@@ -7,6 +8,8 @@ public abstract class Building : MonoBehaviour {
     [SerializeField] private bool isPlaced = false;
     [SerializeField] private bool isBuilt = false;
     [SerializeField] private NavMeshObstacle obstacle = null;
+    private Collider groundCol = null;
+    private List<Collider> colliders = new List<Collider>();
 
     public bool CanBePlaced {get{return canBePlaced;} set{canBePlaced = value;}}
     public bool IsPlaced {get{return isPlaced;} set{isPlaced = value;}}
@@ -15,6 +18,7 @@ public abstract class Building : MonoBehaviour {
 
     // Use this for initialization
     public virtual void Start () {
+        groundCol = GameObject.Find("Terrain").GetComponent<Collider>();
         if (!isPlaced) {
             ValidatePlacement();
         }
@@ -43,6 +47,7 @@ public abstract class Building : MonoBehaviour {
 
     public virtual void PlaceBuilding() {
         if (CanBePlaced) {
+            StartCoroutine(AdjustForTerrain());
             obstacle.enabled = true;
             IsPlaced = true;
             MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
@@ -51,21 +56,33 @@ public abstract class Building : MonoBehaviour {
             }
         }
     }
+    
+    public IEnumerator AdjustForTerrain() {
+        while (colliders.Contains(groundCol)) {
+            transform.Translate(transform.up * 5.0f * Time.deltaTime);
+            yield return new WaitForSeconds(0);
+        }
+    }
 
     public virtual void OnTriggerEnter(Collider other) {
-        if (!isPlaced && canBePlaced) {
+        colliders.Add(other);
+        if (!isPlaced && canBePlaced && !groundCol) {
             InvalidatePlacement();
         }
     }
 
     public virtual void OnTriggerStay(Collider other) {
-        if (!isPlaced && canBePlaced) {
+        if (!colliders.Contains(other)) {
+            colliders.Add(other);
+        }
+        if (!isPlaced && canBePlaced && !groundCol) {
             InvalidatePlacement();
         }
     }
 
     public virtual void OnTriggerExit(Collider other) {
-        if (!isPlaced && !canBePlaced) {
+        colliders.Remove(other);
+        if (!isPlaced && !canBePlaced && !groundCol) {
             ValidatePlacement();
         }
     }
