@@ -31,18 +31,12 @@ public abstract class Building : MonoBehaviour {
 
     public void ValidatePlacement() {
         CanBePlaced = true;
-        MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-        foreach (MeshRenderer ren in rens) {
-            ren.material.color = Color.green;
-        }
+        gUnit.SetColors(Color.green);
     }
 
     public void InvalidatePlacement() {
         CanBePlaced = false;
-        MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-        foreach (MeshRenderer ren in rens) {
-            ren.material.color = Color.red;
-        }
+        gUnit.SetColors(Color.red);
     }
 
     public virtual void PlaceBuilding() {
@@ -50,10 +44,7 @@ public abstract class Building : MonoBehaviour {
             StartCoroutine(AdjustForTerrain());
             obstacle.enabled = true;
             IsPlaced = true;
-            MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-            foreach (MeshRenderer ren in rens) {
-                ren.material.color = Color.white;
-            }
+            gUnit.RevertColors();
         }
     }
     
@@ -62,6 +53,14 @@ public abstract class Building : MonoBehaviour {
             transform.Translate(transform.up * 5.0f * Time.deltaTime);
             yield return new WaitForSeconds(0);
         }
+    }
+
+    public void Demolish() {
+        gUnit.PlayerEnt.FuelCount += (int)(gUnit.FuelCost * 0.15f);
+        gUnit.PlayerEnt.FoodCount += (int)(gUnit.FoodCost * 0.15f);
+        gUnit.PlayerEnt.MetalCount += (int)(gUnit.MetalCost * 0.15f);
+        gUnit.UnselectUnit();
+        Destroy(gameObject);
     }
 
     public virtual void OnTriggerEnter(Collider other) {

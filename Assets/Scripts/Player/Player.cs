@@ -106,7 +106,9 @@ public class Player : MonoBehaviour {
                                 case UnitStates.ATTACK:
                                     mask = 1 << LayerMask.NameToLayer("Unit");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
-                                        SetTarget(hit.transform);
+                                        if (hit.collider.GetComponent<GameUnit>().Team != team) {
+                                            SetTarget(hit.transform);
+                                        }
                                     }
                                     else {
                                         mask = 1 << LayerMask.NameToLayer("Ground");
@@ -115,36 +117,36 @@ public class Player : MonoBehaviour {
                                         }
                                     }
                                     break;
-                                case UnitStates.PATROL:
+                                /*case UnitStates.PATROL:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
-                                    break;
+                                    break;*/
                                 case UnitStates.DEFEND:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
                                     break;
-                                case UnitStates.FOLLOW:
+                                /*case UnitStates.FOLLOW:
                                     mask = 1 << 1 << LayerMask.NameToLayer("Unit");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.transform);
                                     }
-                                    break;
+                                    break;*/
                                 case UnitStates.DO_NOTHING:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
                                     break;
-                                case UnitStates.GUARD:
+                                /*case UnitStates.GUARD:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
-                                    break;
+                                    break;*/
                             }
                         }
                         else {
@@ -163,10 +165,10 @@ public class Player : MonoBehaviour {
                                     OffensiveUnit unit = selectedUnits[0].GetComponent<OffensiveUnit>();
                                     unit.MoveTo(hit.point, UnitStates.TRANSIT);
                                 }
-                                else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+                                /*else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
                                     UnitBuilding building = selectedUnits[0].GetComponent<UnitBuilding>();
                                     building.UnitRallyPoint = hit.point;
-                                }
+                                }*/
                             }
                             else if (selectedUnits.Count > 1) {
                                 if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
@@ -180,7 +182,7 @@ public class Player : MonoBehaviour {
                                         }
                                     }
                                 }
-                                else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+                                /*else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
                                     UnitBuilding building = null;
                                     for (int i = 0; i < selectedUnits.Count; i++) {
                                         building = selectedUnits[i].GetComponent<UnitBuilding>();
@@ -188,7 +190,7 @@ public class Player : MonoBehaviour {
                                             building.UnitRallyPoint = hit.point;
                                         }
                                     }
-                                }
+                                }*/
                             }
                         }
                     }
@@ -218,7 +220,7 @@ public class Player : MonoBehaviour {
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
-                        cenPos /= selectedUnits.Count - 1;
+                        cenPos /= selectedUnits.Count;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             unit = selectedUnits[i].GetComponent<OffensiveUnit>();
                             if (unit != null) {
@@ -235,7 +237,7 @@ public class Player : MonoBehaviour {
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
-                        cenPos /= selectedUnits.Count - 1;
+                        cenPos /= selectedUnits.Count;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             unit = selectedUnits[i].GetComponent<OffensiveUnit>();
                             if (unit != null) {
@@ -252,7 +254,7 @@ public class Player : MonoBehaviour {
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
-                        cenPos /= selectedUnits.Count - 1;
+                        cenPos /= selectedUnits.Count;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             unit = selectedUnits[i].GetComponent<OffensiveUnit>();
                             if (unit != null) {
@@ -349,6 +351,18 @@ public class Player : MonoBehaviour {
         }
         else {
             return false;
+        }
+    }
+
+    public void ChangeUnitStates(UnitStates state) {
+        if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+            OffensiveUnit unit;
+            for (int i = 0; i < selectedUnits.Count; i++) {
+                unit = (OffensiveUnit)selectedUnits[i].Data;
+                if (unit != null) {
+                    unit.MoveTo(unit.transform.position, state);
+                }
+            }
         }
     }
 

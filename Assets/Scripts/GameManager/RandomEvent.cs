@@ -6,6 +6,7 @@ public abstract class RandomEvent {
     private string desc;
     private float eventDuration = 0.0f;
     private float eventTimer = 0.0f;
+    public bool isOver;
 
     public string Name {
         get {

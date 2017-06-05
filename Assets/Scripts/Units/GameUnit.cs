@@ -125,7 +125,7 @@ public class GameUnit : MonoBehaviour {
         }
     }
 
-    private void SetColors(Color col) {
+    public void SetColors(Color col) {
         if (ren != null) {
             for (int i = 0; i < rens.Count; i++) {
                 rens[i].material.color = col;
@@ -138,7 +138,7 @@ public class GameUnit : MonoBehaviour {
         }
     }
 
-    private void RevertColors() {
+    public void RevertColors() {
         if (ren != null) {
             for (int i = 0; i < rens.Count; i++) {
                 rens[i].material.color = ogColors[i];

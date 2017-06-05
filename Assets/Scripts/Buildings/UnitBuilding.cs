@@ -17,7 +17,6 @@ public class UnitBuilding : Building {
 
     // Use this for initialization
     public override void Start () {
-        unitRallyPoint = unitSpawnPoint.position;
         base.Start();
 	}
 	
@@ -42,9 +41,12 @@ public class UnitBuilding : Building {
             if (currentBuildTime >= maxBuildTime) {
                 NavMeshHit hit;
                 NavMesh.SamplePosition(unitSpawnPoint.position, out hit, 50.0f, NavMesh.AllAreas);
+                if (unitRallyPoint == Vector3.zero) {
+                    unitRallyPoint = unitSpawnPoint.position;
+                }
                 OffensiveUnit unit = buildQueue.Dequeue();
                 unit = (OffensiveUnit)Instantiate(unit, hit.position, unitSpawnPoint.rotation);
-                unit.MoveTo(unitRallyPoint, UnitStates.TRANSIT);
+                //unit.MoveTo(unitRallyPoint, UnitStates.TRANSIT);
                 currentBuildTime = 0.0f;
             }
         }

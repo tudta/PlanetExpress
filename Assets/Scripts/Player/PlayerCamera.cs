@@ -9,7 +9,7 @@ public class PlayerCamera : MonoBehaviour {
     private float desiredZoomDist = 0.0f;
     private float zoomIncDist = 0.0f;
     [SerializeField] private int numOfZoomIncs = 0;
-    private int currentZoomInc = 0;
+    [SerializeField] private int currentZoomInc = 0;
     [SerializeField] private float minXRot = 0.0f;
 	[SerializeField] private float maxXRot = 0.0f;
     [SerializeField] private float rotXSpeed = 0.0f;

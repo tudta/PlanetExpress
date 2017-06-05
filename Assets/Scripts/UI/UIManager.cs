@@ -31,6 +31,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text designatedUnitTier = null;
     [SerializeField] private Sprite defaultCmdSprite = null;
     [SerializeField] private List<Button> cmdBtns = new List<Button>();
+    [SerializeField] private GameObject pauseMenu = null;
 
     #region Properties
     public static UIManager Instance {get{return instance;} set{instance = value;}}
@@ -71,6 +72,19 @@ public class UIManager : MonoBehaviour
             else {
                 button.gameObject.SetActive(true);
             }
+        }
+    }
+
+    public void TogglePauseMenu() {
+        if (pauseMenu.activeSelf) {
+            pauseMenu.SetActive(false);
+            gm.CurrentState = GameStates.PLAY;
+            Time.timeScale = 1.0f;
+        }
+        else {
+            pauseMenu.SetActive(true);
+            gm.CurrentState = GameStates.PAUSE;
+            Time.timeScale = 0.0f;
         }
     }
 
@@ -214,36 +228,36 @@ public class UIManager : MonoBehaviour
         if (player.DesignatedUnit != null) {
             if (player.DesignatedUnit.Data.GetType() == typeof(OffensiveUnit)) {
                 OffensiveUnit unit = player.DesignatedUnit.GetComponent<OffensiveUnit>();
-                EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
-                cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
-                EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
-                cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DEFEND); });
-                EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
+                EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
+                cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.TRANSIT); });
+                EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
+                cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
+                /*EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
                 cmdBtns[2].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.PATROL); });
                 EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
                 cmdBtns[3].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.GUARD); });
                 EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
-                cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });
-                EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
-                cmdBtns[5].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DO_NOTHING); });
+                cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });*/
+                EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
+                cmdBtns[2].onClick.AddListener(delegate { player.ChangeUnitStates(UnitStates.DO_NOTHING); });
             }
             else if (player.DesignatedUnit.Data.GetType() == typeof(WorkerUnit)) {
                 WorkerUnit worker = player.DesignatedUnit.GetComponent<WorkerUnit>();
                 if (!worker.InBuildMenu) {
-                    EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
-                    cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
-                    EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Defend"), string.Empty);
-                    cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DEFEND); });
-                    EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
+                    EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
+                    cmdBtns[0].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.TRANSIT); });
+                    EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Attack"), string.Empty);
+                    cmdBtns[1].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.ATTACK); });
+                    /*EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/Patrol"), string.Empty);
                     cmdBtns[2].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.PATROL); });
                     EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Guard"), string.Empty);
                     cmdBtns[3].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.GUARD); });
                     EnableCommand(cmdBtns[4], Resources.Load<Sprite>("CommandSprites/Follow"), string.Empty);
-                    cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });
-                    EnableCommand(cmdBtns[5], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
-                    cmdBtns[5].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.DO_NOTHING); });
-                    EnableCommand(cmdBtns[6], Resources.Load<Sprite>("CommandSprites/Build"), string.Empty);
-                    cmdBtns[6].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
+                    cmdBtns[4].onClick.AddListener(delegate { player.BeginTargeting(UnitStates.FOLLOW); });*/
+                    EnableCommand(cmdBtns[2], Resources.Load<Sprite>("CommandSprites/DoNothing"), string.Empty);
+                    cmdBtns[2].onClick.AddListener(delegate { player.ChangeUnitStates(UnitStates.DO_NOTHING); });
+                    EnableCommand(cmdBtns[3], Resources.Load<Sprite>("CommandSprites/Build"), string.Empty);
+                    cmdBtns[3].onClick.AddListener(delegate { worker.ToggleBuildMenu(); });
                 }
                 else {
                     for (int i = 0; i < worker.BuildingUnits.Count; i++) {
@@ -257,16 +271,21 @@ public class UIManager : MonoBehaviour
             }
             else if (player.DesignatedUnit.Data.GetType() == typeof(UnitBuilding)) {
                 UnitBuilding building = player.DesignatedUnit.GetComponent<UnitBuilding>();
-                EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/RallyPoint"), string.Empty);
-                cmdBtns[0].onClick.AddListener(delegate { print("Rally Command Issued!"); });
-                EnableCommand(cmdBtns[1], Resources.Load<Sprite>("CommandSprites/Demolish"), string.Empty);
-                cmdBtns[1].onClick.AddListener(delegate { print("Demolish Command Issued!"); });
-                for (int i = 2; i - 2 < building.ProductionUnits.Count; i++)
+                //EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/RallyPoint"), string.Empty);
+                //cmdBtns[0].onClick.AddListener(delegate { print("Rally Command Issued!"); });
+                EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Demolish"), string.Empty);
+                cmdBtns[0].onClick.AddListener(delegate { building.Demolish(); });
+                for (int i = 1; i - 1 < building.ProductionUnits.Count; i++)
                 {
                     int tempInt = i;
-                    EnableCommand(cmdBtns[i], building.ProductionUnits[i - 2].GUnit.UnitPortrait, string.Empty);
-                    cmdBtns[i].onClick.AddListener(delegate { building.AddToBuildQueue(building.ProductionUnits[tempInt - 2]); });
+                    EnableCommand(cmdBtns[i], building.ProductionUnits[i - 1].GUnit.UnitPortrait, string.Empty);
+                    cmdBtns[i].onClick.AddListener(delegate { building.AddToBuildQueue(building.ProductionUnits[tempInt - 1]); });
                 }
+            }
+            else if (player.DesignatedUnit.Data.GetType() == typeof(ResourceBuilding)) {
+                ResourceBuilding building = player.DesignatedUnit.GetComponent<ResourceBuilding>();
+                EnableCommand(cmdBtns[0], Resources.Load<Sprite>("CommandSprites/Demolish"), string.Empty);
+                cmdBtns[0].onClick.AddListener(delegate { building.Demolish(); });
             }
         }
     }
