@@ -19,6 +19,10 @@ public class GameUnit : MonoBehaviour {
     private Player playerEnt = null;
     private bool isSelected = false;
     [SerializeField] private MeshRenderer ren = null;
+    private List<MeshRenderer> rens = new List<MeshRenderer>();
+    [SerializeField] private SkinnedMeshRenderer skRen = null;
+    private List<SkinnedMeshRenderer> skRens = new List<SkinnedMeshRenderer>();
+    private List<Color> ogColors = new List<Color>();
 
     public int Team {get{return team;} set{team = value;}}
     public int Health {get{return currentHealth;} set{currentHealth = value;}}
@@ -42,21 +46,38 @@ public class GameUnit : MonoBehaviour {
     // Use this for initialization
     public virtual void Start () {
         PlayerEnt = Player.Instance;
-	}
+        GetColors();
+    }
 	
 	// Update is called once per frame
 	public virtual void Update () {
         //Check if player is selecting unit
-        if (ren.isVisible && PlayerEnt.IsDragSelecting) {
-            Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
-            camPos.y = PlayerEnt.InvertMouseY(camPos.y);
-            if (PlayerEnt.Selection.Contains(camPos) && team == Player.Instance.Team) {
-                if (!isSelected) {
-                    SelectUnit();
+        if (ren != null) {
+            if (ren.isVisible && PlayerEnt.IsDragSelecting) {
+                Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
+                camPos.y = PlayerEnt.InvertMouseY(camPos.y);
+                if (PlayerEnt.Selection.Contains(camPos) && team == Player.Instance.Team) {
+                    if (!isSelected) {
+                        SelectUnit();
+                    }
+                }
+                else if (isSelected) {
+                    UnselectUnit();
                 }
             }
-            else if (isSelected) {
-                UnselectUnit();
+        }
+        else if (skRen != null) {
+            if (skRen.isVisible && PlayerEnt.IsDragSelecting) {
+                Vector3 camPos = Camera.main.WorldToScreenPoint(transform.position);
+                camPos.y = PlayerEnt.InvertMouseY(camPos.y);
+                if (PlayerEnt.Selection.Contains(camPos) && team == Player.Instance.Team) {
+                    if (!isSelected) {
+                        SelectUnit();
+                    }
+                }
+                else if (isSelected) {
+                    UnselectUnit();
+                }
             }
         }
     }
@@ -65,11 +86,7 @@ public class GameUnit : MonoBehaviour {
         if (!PlayerEnt.SelectedUnits.Contains(this) && PlayerEnt.SelectedUnits.Count < PlayerEnt.MaxSelectionCount) {
             PlayerEnt.SelectedUnits.Add(this);
             isSelected = true;
-            List<MeshRenderer> rens = new List<MeshRenderer>();
-            rens.AddRange(GetComponentsInChildren<MeshRenderer>());
-            foreach (MeshRenderer mRen in rens) {
-                mRen.material.color = Color.green;
-            }
+            SetColors(Color.green);
             UIManager.Instance.AddUnitToGroup(this);
             if (PlayerEnt.SelectedUnits.Count == 1) {
                 PlayerEnt.DesignatedUnit = this;
@@ -81,11 +98,7 @@ public class GameUnit : MonoBehaviour {
         if (PlayerEnt.SelectedUnits.Contains(this)) {
             PlayerEnt.SelectedUnits.Remove(this);
             isSelected = false;
-            List<MeshRenderer> rens = new List<MeshRenderer>();
-            rens.AddRange(GetComponentsInChildren<MeshRenderer>());
-            foreach (MeshRenderer ren in rens) {
-                ren.material.color = Color.white;
-            }
+            RevertColors();
             UIManager.Instance.RemoveUnitFromGroup(this);
             if (PlayerEnt.DesignatedUnit == this) {
                 PlayerEnt.DesignatedUnit = null;
@@ -93,6 +106,47 @@ public class GameUnit : MonoBehaviour {
             if (data.GetType() == typeof(WorkerUnit)) {
                 WorkerUnit worker = (WorkerUnit)data;
                 worker.InBuildMenu = false;
+            }
+        }
+    }
+
+    private void GetColors() {
+        if (ren != null) {
+            rens.AddRange(GetComponentsInChildren<MeshRenderer>());
+            for (int i = 0; i < rens.Count; i++) {
+                ogColors.Add(rens[i].material.color);
+            }
+        }
+        else if (skRen != null) {
+            skRens.AddRange(GetComponentsInChildren<SkinnedMeshRenderer>());
+            for (int i = 0; i < skRens.Count; i++) {
+                ogColors.Add(skRens[i].material.color);
+            }
+        }
+    }
+
+    private void SetColors(Color col) {
+        if (ren != null) {
+            for (int i = 0; i < rens.Count; i++) {
+                rens[i].material.color = col;
+            }
+        }
+        else if (skRen != null) {
+            for (int i = 0; i < skRens.Count; i++) {
+                skRens[i].material.color = col;
+            }
+        }
+    }
+
+    private void RevertColors() {
+        if (ren != null) {
+            for (int i = 0; i < rens.Count; i++) {
+                rens[i].material.color = ogColors[i];
+            }
+        }
+        else if (skRen != null) {
+            for (int i = 0; i < skRens.Count; i++) {
+                skRens[i].material.color = ogColors[i];
             }
         }
     }
