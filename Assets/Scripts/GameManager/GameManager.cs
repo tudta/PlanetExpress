@@ -16,6 +16,11 @@ public class GameManager : MonoBehaviour
     private List<Formation> groupFormations = new List<Formation>();
     private List<SiegeEvent> currentEvents = new List<SiegeEvent>();
     private int eventsFired = 0;
+    public AudioClip menuMusic;
+    public AudioClip gameMusic;
+    public AudioClip clickSound;
+    public AudioClip shootSound;
+    public AudioClip orderSound;
 
     public static GameManager Instance {get{return instance;} set{instance = value;}}
     public GameStates CurrentState {get{return currentState;} set{currentState = value;}}
@@ -28,7 +33,10 @@ public class GameManager : MonoBehaviour
     void Start () {
         player = Player.Instance;
         Init();
-        InitiateSiegeEvent();
+        if (SceneManager.GetActiveScene().buildIndex == 1) {
+            InitiateSiegeEvent();
+        }
+        PlayMusic();
 	}
 	
 	// Update is called once per frame
@@ -52,6 +60,19 @@ public class GameManager : MonoBehaviour
         groupFormations.Add(new LineFormation());
         groupFormations.Add(new ZipperFormation());
         groupFormations.Add(new BoxFormation());
+    }
+
+    private void PlayMusic() {
+        if (SceneManager.GetActiveScene().buildIndex == 0) {
+            Camera.main.GetComponent<AudioSource>().clip = menuMusic;
+            Camera.main.GetComponent<AudioSource>().volume = 0.8f;
+            Camera.main.GetComponent<AudioSource>().Play();
+        }
+        else {
+            Camera.main.GetComponent<AudioSource>().clip = gameMusic;
+            Camera.main.GetComponent<AudioSource>().volume = 0.4f;
+            Camera.main.GetComponent<AudioSource>().Play();
+        }
     }
 
     public void ChangeLevel(int sceneNum) {

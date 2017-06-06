@@ -164,6 +164,7 @@ public class Player : MonoBehaviour {
                                 if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
                                     OffensiveUnit unit = selectedUnits[0].GetComponent<OffensiveUnit>();
                                     unit.MoveTo(hit.point, UnitStates.TRANSIT);
+                                    Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
                                 }
                                 /*else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
                                     UnitBuilding building = selectedUnits[0].GetComponent<UnitBuilding>();
@@ -179,6 +180,9 @@ public class Player : MonoBehaviour {
                                             if (unit != null) {
                                                 unit.MoveTo(hit.point + currentForm.Positions[i], UnitStates.TRANSIT);
                                             }
+                                        }
+                                        if (unit != null) {
+                                            Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
                                         }
                                     }
                                 }
@@ -296,28 +300,30 @@ public class Player : MonoBehaviour {
     }
 
     public void SetTarget(Vector3 pos) {
+        Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
         if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
             OffensiveUnit unit;
             for (int i = 0; i < selectedUnits.Count; i++) {
-                unit = (OffensiveUnit)selectedUnits[i].Data;
-                if (unit != null) {
+                if (selectedUnits[i].Data.GetType() == typeof(OffensiveUnit) || selectedUnits[i].Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+                    unit = (OffensiveUnit)selectedUnits[i].Data;
                     unit.MoveTo(pos, targetingState);
                 }
             }
         }
         else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
-            UnitBuilding unit;
+            /*UnitBuilding unit;
             for (int i = 0; i < selectedUnits.Count; i++) {
                 unit = (UnitBuilding)selectedUnits[i].Data;
                 if (unit != null) {
                     unit.UnitRallyPoint = pos;
                 }
-            }
+            }*/
         }
         CancelTargeting();
     }
 
     public void SetTarget(Transform trans) {
+        Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
         if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
             OffensiveUnit unit;
             for (int i = 0; i < selectedUnits.Count; i++) {
@@ -358,8 +364,8 @@ public class Player : MonoBehaviour {
         if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
             OffensiveUnit unit;
             for (int i = 0; i < selectedUnits.Count; i++) {
-                unit = (OffensiveUnit)selectedUnits[i].Data;
-                if (unit != null) {
+                if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+                    unit = (OffensiveUnit)selectedUnits[i].Data;
                     unit.MoveTo(unit.transform.position, state);
                 }
             }

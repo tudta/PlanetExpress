@@ -330,13 +330,13 @@ public class OffensiveUnit : MonoBehaviour
             transform.LookAt(tar);
             GameObject go = (GameObject)Instantiate(projectile, firePoint.position, firePoint.rotation);
             go.GetComponent<Projectile>().SetProjectileValues(gUnit.Team, projectileSpeed, damage);
+            Camera.main.GetComponent<AudioSource>().PlayOneShot(GameManager.Instance.shootSound);
             yield return new WaitForSeconds(attackSpeed);
             canFire = true;
         }
     }
 
     public void ApplyDamage(int damage) {
-        print(gameObject.name + " has taken " + damage + " at " + Time.time);
         gUnit.ApplyDamage(damage);
     }
 

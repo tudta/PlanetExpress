@@ -38,13 +38,13 @@ public class SiegeEvent : RandomEvent {
             NavMesh.SamplePosition(mainHit.position + groupFormation.Positions[0], out tmpHit, 100.0f, NavMesh.AllAreas);
             spawnedUnits.Add((GameObject)Object.Instantiate(bossUnit, tmpHit.position + groupFormation.Positions[0], spawnPoint.transform.rotation));
             spawnedUnits[0].GetComponent<OffensiveUnit>().GUnit.Team = 1;
-            spawnedUnits[0].GetComponent<OffensiveUnit>().Agent.speed *= 10.0f;
+            spawnedUnits[0].GetComponent<OffensiveUnit>().Agent.speed *= 6.0f;
             spawnedUnits[0].GetComponent<OffensiveUnit>().MoveTo(comHit.position, UnitStates.ATTACK);
             for (int i = 1; i < groupSize; i++) {
                 NavMesh.SamplePosition(mainHit.position + groupFormation.Positions[i], out tmpHit, 100.0f, NavMesh.AllAreas);
                 spawnedUnits.Add((GameObject)Object.Instantiate(mobUnit, tmpHit.position + groupFormation.Positions[i], spawnPoint.transform.rotation));
                 spawnedUnits[i].GetComponent<OffensiveUnit>().GUnit.Team = 1;
-                spawnedUnits[i].GetComponent<OffensiveUnit>().Agent.speed *= 10.0f;
+                spawnedUnits[i].GetComponent<OffensiveUnit>().Agent.speed *= 6.0f;
                 spawnedUnits[i].GetComponent<OffensiveUnit>().MoveTo(comHit.position, UnitStates.ATTACK);
             }
         }        
