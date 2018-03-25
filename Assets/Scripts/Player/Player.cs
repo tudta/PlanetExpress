@@ -72,6 +72,7 @@ public class Player : MonoBehaviour {
                         tmpV3 = Camera.main.ScreenToWorldPoint(tmpV3);
                         tmpV3 = new Vector3(tmpV3.x, hit.point.y, tmpV3.z);
                         tarBuildingObj.transform.position = tmpV3;
+                        tarBuildingObj.transform.up = hit.normal;
                     }
                 }
                 break;
@@ -105,7 +106,9 @@ public class Player : MonoBehaviour {
                                 case UnitStates.ATTACK:
                                     mask = 1 << LayerMask.NameToLayer("Unit");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
-                                        SetTarget(hit.transform);
+                                        if (hit.collider.GetComponent<GameUnit>().Team != team) {
+                                            SetTarget(hit.transform);
+                                        }
                                     }
                                     else {
                                         mask = 1 << LayerMask.NameToLayer("Ground");
@@ -114,36 +117,36 @@ public class Player : MonoBehaviour {
                                         }
                                     }
                                     break;
-                                case UnitStates.PATROL:
+                                /*case UnitStates.PATROL:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
-                                    break;
+                                    break;*/
                                 case UnitStates.DEFEND:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
                                     break;
-                                case UnitStates.FOLLOW:
+                                /*case UnitStates.FOLLOW:
                                     mask = 1 << 1 << LayerMask.NameToLayer("Unit");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.transform);
                                     }
-                                    break;
+                                    break;*/
                                 case UnitStates.DO_NOTHING:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
                                     break;
-                                case UnitStates.GUARD:
+                                /*case UnitStates.GUARD:
                                     mask = 1 << LayerMask.NameToLayer("Ground");
                                     if (Physics.Raycast(ray, out hit, 200, mask)) {
                                         SetTarget(hit.point);
                                     }
-                                    break;
+                                    break;*/
                             }
                         }
                         else {
@@ -161,11 +164,12 @@ public class Player : MonoBehaviour {
                                 if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
                                     OffensiveUnit unit = selectedUnits[0].GetComponent<OffensiveUnit>();
                                     unit.MoveTo(hit.point, UnitStates.TRANSIT);
+                                    Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
                                 }
-                                else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+                                /*else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
                                     UnitBuilding building = selectedUnits[0].GetComponent<UnitBuilding>();
                                     building.UnitRallyPoint = hit.point;
-                                }
+                                }*/
                             }
                             else if (selectedUnits.Count > 1) {
                                 if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
@@ -177,9 +181,12 @@ public class Player : MonoBehaviour {
                                                 unit.MoveTo(hit.point + currentForm.Positions[i], UnitStates.TRANSIT);
                                             }
                                         }
+                                        if (unit != null) {
+                                            Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
+                                        }
                                     }
                                 }
-                                else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
+                                /*else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
                                     UnitBuilding building = null;
                                     for (int i = 0; i < selectedUnits.Count; i++) {
                                         building = selectedUnits[i].GetComponent<UnitBuilding>();
@@ -187,7 +194,7 @@ public class Player : MonoBehaviour {
                                             building.UnitRallyPoint = hit.point;
                                         }
                                     }
-                                }
+                                }*/
                             }
                         }
                     }
@@ -217,7 +224,7 @@ public class Player : MonoBehaviour {
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
-                        cenPos /= selectedUnits.Count - 1;
+                        cenPos /= selectedUnits.Count;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             unit = selectedUnits[i].GetComponent<OffensiveUnit>();
                             if (unit != null) {
@@ -234,7 +241,7 @@ public class Player : MonoBehaviour {
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
-                        cenPos /= selectedUnits.Count - 1;
+                        cenPos /= selectedUnits.Count;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             unit = selectedUnits[i].GetComponent<OffensiveUnit>();
                             if (unit != null) {
@@ -251,7 +258,7 @@ public class Player : MonoBehaviour {
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             cenPos += selectedUnits[i].transform.position;
                         }
-                        cenPos /= selectedUnits.Count - 1;
+                        cenPos /= selectedUnits.Count;
                         for (int i = 0; i < selectedUnits.Count; i++) {
                             unit = selectedUnits[i].GetComponent<OffensiveUnit>();
                             if (unit != null) {
@@ -293,28 +300,30 @@ public class Player : MonoBehaviour {
     }
 
     public void SetTarget(Vector3 pos) {
+        Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
         if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
             OffensiveUnit unit;
             for (int i = 0; i < selectedUnits.Count; i++) {
-                unit = (OffensiveUnit)selectedUnits[i].Data;
-                if (unit != null) {
+                if (selectedUnits[i].Data.GetType() == typeof(OffensiveUnit) || selectedUnits[i].Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+                    unit = (OffensiveUnit)selectedUnits[i].Data;
                     unit.MoveTo(pos, targetingState);
                 }
             }
         }
         else if (designatedUnit.Data.GetType() == typeof(UnitBuilding) || designatedUnit.Data.GetType().IsSubclassOf(typeof(UnitBuilding))) {
-            UnitBuilding unit;
+            /*UnitBuilding unit;
             for (int i = 0; i < selectedUnits.Count; i++) {
                 unit = (UnitBuilding)selectedUnits[i].Data;
                 if (unit != null) {
                     unit.UnitRallyPoint = pos;
                 }
-            }
+            }*/
         }
         CancelTargeting();
     }
 
     public void SetTarget(Transform trans) {
+        Camera.main.GetComponent<AudioSource>().PlayOneShot(gm.orderSound);
         if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
             OffensiveUnit unit;
             for (int i = 0; i < selectedUnits.Count; i++) {
@@ -348,6 +357,18 @@ public class Player : MonoBehaviour {
         }
         else {
             return false;
+        }
+    }
+
+    public void ChangeUnitStates(UnitStates state) {
+        if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+            OffensiveUnit unit;
+            for (int i = 0; i < selectedUnits.Count; i++) {
+                if (designatedUnit.Data.GetType() == typeof(OffensiveUnit) || designatedUnit.Data.GetType().IsSubclassOf(typeof(OffensiveUnit))) {
+                    unit = (OffensiveUnit)selectedUnits[i].Data;
+                    unit.MoveTo(unit.transform.position, state);
+                }
+            }
         }
     }
 

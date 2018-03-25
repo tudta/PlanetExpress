@@ -19,6 +19,7 @@ public class OffensiveUnit : MonoBehaviour
     [SerializeField] private NavMeshObstacle obstacle;
     private bool isChangingAgent = false;
     [SerializeField] private float distThreshold = 0.0f;
+    private Vector3 ogAttackDest = Vector3.zero;
 
     #region Properties
     public GameUnit GUnit {
@@ -90,6 +91,26 @@ public class OffensiveUnit : MonoBehaviour
             target = value;
         }
     }
+
+    public NavMeshAgent Agent {
+        get {
+            return agent;
+        }
+
+        set {
+            agent = value;
+        }
+    }
+
+    public Vector3 OgAttackDest {
+        get {
+            return ogAttackDest;
+        }
+
+        set {
+            ogAttackDest = value;
+        }
+    }
     #endregion
 
     void Awake() {
@@ -117,10 +138,15 @@ public class OffensiveUnit : MonoBehaviour
                         break;
                     case UnitStates.ATTACK:
                         if (Target == null) {
-                            ChangeState(UnitStates.IDLE);
+                            if (transform.position == agent.destination) {
+                                ChangeState(UnitStates.IDLE);
+                            }
+                            else {
+                                ScanForEnemiesInVision();
+                                MoveTo(OgAttackDest, UnitStates.ATTACK);
+                            }
                         }
                         else {
-                            //Attack if in range
                             if (InAttackRange(Target)) {
                                 StartCoroutine(Attack(Target));
                             }
@@ -133,6 +159,8 @@ public class OffensiveUnit : MonoBehaviour
                         //Move from destination A to B
                         //Attack units in range
                         break;
+                    case UnitStates.DO_NOTHING:
+                        break;
                 }
             }
         }
@@ -140,6 +168,17 @@ public class OffensiveUnit : MonoBehaviour
 
     public void ChangeState(UnitStates state) {
         lastState = currentState;
+        if (state != UnitStates.ATTACK) {
+            target = null;
+        }
+        else {
+            if (target != null) {
+                OgAttackDest = target.position;
+            }
+            else {
+                OgAttackDest = agent.destination;
+            }
+        }
         currentState = state;
     }
 
@@ -201,6 +240,7 @@ public class OffensiveUnit : MonoBehaviour
             yield return new WaitForSeconds(0);
             agent.enabled = true;
             agent.destination = pos;
+            ogAttackDest = pos;
         }
         ChangeState(state);
         isChangingAgent = false;
@@ -213,6 +253,7 @@ public class OffensiveUnit : MonoBehaviour
         }
         else {
             agent.destination = pos;
+            ogAttackDest = pos;
             ChangeState(state);
         }
     }
@@ -224,6 +265,7 @@ public class OffensiveUnit : MonoBehaviour
         }
         else {
             agent.destination = trans.position;
+            ogAttackDest = trans.position;
             ChangeState(state);
         }
     }
@@ -242,7 +284,7 @@ public class OffensiveUnit : MonoBehaviour
 
     public void ScanForEnemiesInAttackRange() {
         GameUnit unit;
-        Collider[] cols = Physics.OverlapSphere(transform.position, AttackRange);
+        Collider[] cols = Physics.OverlapSphere(transform.position, attackRange);
         foreach (Collider col in cols) {
             unit = col.GetComponent<GameUnit>();
             if (unit != null && unit.GUnitType != GameUnitTypes.TERRAIN && unit.Team != gUnit.Team) {
@@ -255,7 +297,7 @@ public class OffensiveUnit : MonoBehaviour
     public bool InAttackRange(Transform t) {
         Vector3 dir = (t.position - transform.position).normalized;
         RaycastHit hit;
-        if (Physics.Raycast(firePoint.position, dir, out hit, AttackRange)) {
+        if (Physics.Raycast(firePoint.position, dir, out hit, attackRange)) {
             if (hit.transform == t) {
                 return true;
             }
@@ -269,12 +311,12 @@ public class OffensiveUnit : MonoBehaviour
     }
 
     public void SetTarget(Transform t) {
-        Target = t;
+        target = t;
         if (!agent.enabled) {
-            StartCoroutine(ToggleAgent(Target.position, UnitStates.ATTACK));
+            StartCoroutine(ToggleAgent(target.position, UnitStates.ATTACK));
         }
         else {
-            agent.destination = Target.position;
+            agent.destination = target.position;
             ChangeState(UnitStates.ATTACK);
         }
     }
@@ -287,8 +329,9 @@ public class OffensiveUnit : MonoBehaviour
             canFire = false;
             transform.LookAt(tar);
             GameObject go = (GameObject)Instantiate(projectile, firePoint.position, firePoint.rotation);
-            go.GetComponent<Projectile>().SetProjectileValues(gUnit.Team, ProjectileSpeed, Damage);
-            yield return new WaitForSeconds(AttackSpeed);
+            go.GetComponent<Projectile>().SetProjectileValues(gUnit.Team, projectileSpeed, damage);
+            Camera.main.GetComponent<AudioSource>().PlayOneShot(GameManager.Instance.shootSound);
+            yield return new WaitForSeconds(attackSpeed);
             canFire = true;
         }
     }

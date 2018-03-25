@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public abstract class Building : MonoBehaviour {
     [SerializeField] private GameUnit gUnit = null;
@@ -7,6 +8,8 @@ public abstract class Building : MonoBehaviour {
     [SerializeField] private bool isPlaced = false;
     [SerializeField] private bool isBuilt = false;
     [SerializeField] private NavMeshObstacle obstacle = null;
+    private Collider groundCol = null;
+    private List<Collider> colliders = new List<Collider>();
 
     public bool CanBePlaced {get{return canBePlaced;} set{canBePlaced = value;}}
     public bool IsPlaced {get{return isPlaced;} set{isPlaced = value;}}
@@ -15,6 +18,7 @@ public abstract class Building : MonoBehaviour {
 
     // Use this for initialization
     public virtual void Start () {
+        groundCol = GameObject.Find("Terrain").GetComponent<Collider>();
         if (!isPlaced) {
             ValidatePlacement();
         }
@@ -27,45 +31,57 @@ public abstract class Building : MonoBehaviour {
 
     public void ValidatePlacement() {
         CanBePlaced = true;
-        MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-        foreach (MeshRenderer ren in rens) {
-            ren.material.color = Color.green;
-        }
+        gUnit.SetColors(Color.green);
     }
 
     public void InvalidatePlacement() {
         CanBePlaced = false;
-        MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-        foreach (MeshRenderer ren in rens) {
-            ren.material.color = Color.red;
-        }
+        gUnit.SetColors(Color.red);
     }
 
     public virtual void PlaceBuilding() {
         if (CanBePlaced) {
+            StartCoroutine(AdjustForTerrain());
             obstacle.enabled = true;
             IsPlaced = true;
-            MeshRenderer[] rens = GetComponentsInChildren<MeshRenderer>();
-            foreach (MeshRenderer ren in rens) {
-                ren.material.color = Color.white;
-            }
+            gUnit.RevertColors();
+        }
+    }
+    
+    public IEnumerator AdjustForTerrain() {
+        while (colliders.Contains(groundCol)) {
+            transform.Translate(transform.up * 5.0f * Time.deltaTime);
+            yield return new WaitForSeconds(0);
         }
     }
 
+    public void Demolish() {
+        gUnit.PlayerEnt.FuelCount += (int)(gUnit.FuelCost * 0.15f);
+        gUnit.PlayerEnt.FoodCount += (int)(gUnit.FoodCost * 0.15f);
+        gUnit.PlayerEnt.MetalCount += (int)(gUnit.MetalCost * 0.15f);
+        gUnit.UnselectUnit();
+        Destroy(gameObject);
+    }
+
     public virtual void OnTriggerEnter(Collider other) {
-        if (!isPlaced && canBePlaced) {
+        colliders.Add(other);
+        if (!isPlaced && canBePlaced && !groundCol) {
             InvalidatePlacement();
         }
     }
 
     public virtual void OnTriggerStay(Collider other) {
-        if (!isPlaced && canBePlaced) {
+        if (!colliders.Contains(other)) {
+            colliders.Add(other);
+        }
+        if (!isPlaced && canBePlaced && !groundCol) {
             InvalidatePlacement();
         }
     }
 
     public virtual void OnTriggerExit(Collider other) {
-        if (!isPlaced && !canBePlaced) {
+        colliders.Remove(other);
+        if (!isPlaced && !canBePlaced && !groundCol) {
             ValidatePlacement();
         }
     }

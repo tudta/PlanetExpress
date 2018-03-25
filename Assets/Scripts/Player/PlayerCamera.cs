@@ -9,7 +9,7 @@ public class PlayerCamera : MonoBehaviour {
     private float desiredZoomDist = 0.0f;
     private float zoomIncDist = 0.0f;
     [SerializeField] private int numOfZoomIncs = 0;
-    private int currentZoomInc = 0;
+    [SerializeField] private int currentZoomInc = 0;
     [SerializeField] private float minXRot = 0.0f;
 	[SerializeField] private float maxXRot = 0.0f;
     [SerializeField] private float rotXSpeed = 0.0f;
@@ -126,10 +126,10 @@ public class PlayerCamera : MonoBehaviour {
     }
 
 	private void SetScrollLimits() {
-		leftScrollLimit = 0;
+		leftScrollLimit = 1;
 		rightScrollLimit = Screen.width - 1;
-		topScrollLimit = Screen.height;
-        bottomScrollLimit = 0;
+		topScrollLimit = Screen.height - 1;
+        bottomScrollLimit = 1;
 	}
 
     private void SetZoomIncrements() {
