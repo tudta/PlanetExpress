@@ -15,8 +15,8 @@ public class OffensiveUnit : MonoBehaviour
     [SerializeField] private Transform firePoint = null;
     private bool canFire = true;
     private Transform target = null;
-    [SerializeField] private NavMeshAgent agent = null;
-    [SerializeField] private NavMeshObstacle obstacle;
+    [SerializeField] private UnityEngine.AI.NavMeshAgent agent = null;
+    [SerializeField] private UnityEngine.AI.NavMeshObstacle obstacle;
     private bool isChangingAgent = false;
     [SerializeField] private float distThreshold = 0.0f;
     private Vector3 ogAttackDest = Vector3.zero;
@@ -92,7 +92,7 @@ public class OffensiveUnit : MonoBehaviour
         }
     }
 
-    public NavMeshAgent Agent {
+    public UnityEngine.AI.NavMeshAgent Agent {
         get {
             return agent;
         }

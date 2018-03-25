@@ -39,8 +39,8 @@ public class UnitBuilding : Building {
         if (BuildQueue.Count > 0) {
             currentBuildTime += Time.deltaTime;
             if (currentBuildTime >= maxBuildTime) {
-                NavMeshHit hit;
-                NavMesh.SamplePosition(unitSpawnPoint.position, out hit, 50.0f, NavMesh.AllAreas);
+                UnityEngine.AI.NavMeshHit hit;
+                UnityEngine.AI.NavMesh.SamplePosition(unitSpawnPoint.position, out hit, 50.0f, UnityEngine.AI.NavMesh.AllAreas);
                 if (unitRallyPoint == Vector3.zero) {
                     unitRallyPoint = unitSpawnPoint.position;
                 }

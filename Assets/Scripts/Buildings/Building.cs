@@ -7,7 +7,7 @@ public abstract class Building : MonoBehaviour {
     [SerializeField] private bool canBePlaced = false;
     [SerializeField] private bool isPlaced = false;
     [SerializeField] private bool isBuilt = false;
-    [SerializeField] private NavMeshObstacle obstacle = null;
+    [SerializeField] private UnityEngine.AI.NavMeshObstacle obstacle = null;
     private Collider groundCol = null;
     private List<Collider> colliders = new List<Collider>();
 
