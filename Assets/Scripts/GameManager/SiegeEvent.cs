@@ -19,6 +19,7 @@ public class SiegeEvent : RandomEvent {
     }
 
     public override void EventStart() {
+        Debug.Log("Event started!");
         //Get random spawn waypoint
         GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("Spawn");
         GameObject spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];

@@ -26,14 +26,19 @@ public class GameManager : MonoBehaviour
     public GameStates CurrentState {get{return currentState;} set{currentState = value;}}
     
     void Awake() {
-        instance = this;
+        if (instance != null) {
+            Destroy(this);
+        }
+        else {
+            instance = this;
+        }
     }
 
     // Use this for initialization
     void Start () {
         player = Player.Instance;
         Init();
-        if (SceneManager.GetActiveScene().buildIndex == 1) {
+        if (SceneManager.GetActiveScene().buildIndex == 1 || SceneManager.GetActiveScene().buildIndex == 3) {
             InitiateSiegeEvent();
         }
         PlayMusic();
@@ -63,7 +68,7 @@ public class GameManager : MonoBehaviour
     }
 
     private void PlayMusic() {
-        if (SceneManager.GetActiveScene().buildIndex == 0) {
+        if (SceneManager.GetActiveScene().buildIndex == 0 || SceneManager.GetActiveScene().buildIndex == 2) {
             Camera.main.GetComponent<AudioSource>().clip = menuMusic;
             Camera.main.GetComponent<AudioSource>().volume = 0.8f;
             Camera.main.GetComponent<AudioSource>().Play();

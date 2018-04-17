@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
+using Pathfinding;
 using System.Collections;
 
-public class OffensiveUnit : MonoBehaviour
-{
+public class OffensiveUnit : MonoBehaviour {
     [SerializeField] private GameUnit gUnit = null;
-    [SerializeField]private UnitStates currentState = UnitStates.IDLE;
+    [SerializeField] private UnitStates currentState = UnitStates.IDLE;
     private UnitStates lastState = UnitStates.IDLE;
-    [SerializeField] private float movespeed = 0.0f;
+
+    //Combat Stats
+    [SerializeField] private float _movespeed = 0.0f;
     [SerializeField] private int damage = 0;
     [SerializeField] private float attackRange = 0.0f;
     [SerializeField] private float projectileSpeed = 0.0f;
@@ -15,11 +17,12 @@ public class OffensiveUnit : MonoBehaviour
     [SerializeField] private Transform firePoint = null;
     private bool canFire = true;
     private Transform target = null;
-    [SerializeField] private UnityEngine.AI.NavMeshAgent agent = null;
-    [SerializeField] private UnityEngine.AI.NavMeshObstacle obstacle;
-    private bool isChangingAgent = false;
-    [SerializeField] private float distThreshold = 0.0f;
     private Vector3 ogAttackDest = Vector3.zero;
+
+    private Seeker _seeker = null;
+    private Path _path = null;
+    private int _currentWaypoint = 0;
+    private float _waypointDistThreshold = 0.0f;
 
     #region Properties
     public GameUnit GUnit {
@@ -32,13 +35,13 @@ public class OffensiveUnit : MonoBehaviour
         }
     }
 
-    public float Movespeed {
+    public float _Movespeed {
         get {
-            return movespeed;
+            return _movespeed;
         }
 
         set {
-            movespeed = value;
+            _movespeed = value;
         }
     }
 
@@ -92,13 +95,13 @@ public class OffensiveUnit : MonoBehaviour
         }
     }
 
-    public UnityEngine.AI.NavMeshAgent Agent {
+    public Seeker _Seeker {
         get {
-            return agent;
+            return _seeker;
         }
 
         set {
-            agent = value;
+            _seeker = value;
         }
     }
 
@@ -114,54 +117,72 @@ public class OffensiveUnit : MonoBehaviour
     #endregion
 
     void Awake() {
-        agent.stoppingDistance = 0.0f;
-        agent.avoidancePriority = Random.Range(0, 101);
-        //StartCoroutine(ToggleAgent(UnitStates.IDLE));
+
     }
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start() {
         gUnit = GetComponent<GameUnit>();
     }
 
     // Update is called once per frame
     void Update() {
         if (GameManager.Instance.CurrentState == GameStates.PLAY) {
-            if (!isChangingAgent) {
-                //UnitState AI
-                switch (currentState) {
-                    case UnitStates.IDLE:
-                        ScanForEnemiesInVision();
-                        break;
-                    case UnitStates.TRANSIT:
-                        CheckArrival();
-                        break;
-                    case UnitStates.ATTACK:
-                        if (Target == null) {
-                            if (transform.position == agent.destination) {
-                                ChangeState(UnitStates.IDLE);
-                            }
-                            else {
-                                ScanForEnemiesInVision();
-                                MoveTo(OgAttackDest, UnitStates.ATTACK);
-                            }
-                        }
-                        else {
-                            if (InAttackRange(Target)) {
-                                StartCoroutine(Attack(Target));
-                            }
-                            else {
-                                MoveTo(Target, UnitStates.ATTACK);
-                            }
-                        }
-                        break;
-                    case UnitStates.PATROL:
-                        //Move from destination A to B
-                        //Attack units in range
-                        break;
-                    case UnitStates.DO_NOTHING:
-                        break;
+            //UnitState AI
+            switch (currentState) {
+                case UnitStates.IDLE:
+                ScanForEnemiesInVision();
+                break;
+                case UnitStates.TRANSIT:
+
+                //MOVE TOWARDS END OF PATH
+                /*OLD METHOD
+                if (transform.position == _seeker.destination) {
+                    ChangeState(UnitStates.IDLE);
                 }
+                CheckArrival();*/
+
+                //Check if a path exists and has not reached the end
+                if (_path != null && _currentWaypoint < _path.vectorPath.Count) {
+                    //Check if close enough to waypoint
+                    if (Vector3.Distance(transform.position, _path.vectorPath[_currentWaypoint]) <= _waypointDistThreshold) {
+                        _currentWaypoint++;
+                    }
+                    //Move towards waypoint
+                    else {
+                        Vector3 dir = (_path.vectorPath[_currentWaypoint] - transform.position).normalized;
+                        transform.position += dir * _movespeed;
+                    }
+                }
+                else {
+                    ChangeState(UnitStates.IDLE);
+                }
+                break;
+                case UnitStates.ATTACK:
+                if (Target == null) {
+                    //Check 
+                    else {
+                        //SCAN FOR ENEMIES OR MOVE TO ATTACKING POSITION
+                        ScanForEnemiesInVision();
+                        MoveTo(OgAttackDest, UnitStates.ATTACK);
+                    }
+                }
+                else {
+                    if (InAttackRange(Target)) {
+                        StartCoroutine(Attack(Target));
+                    }
+                    else {
+                        //MOVE TO ATTACK TARGET
+                        MoveTo(Target, UnitStates.ATTACK);
+                    }
+                }
+                break;
+                case UnitStates.PATROL:
+                //Move from destination A to B
+                //Attack units in range
+                break;
+                case UnitStates.DO_NOTHING:
+                break;
             }
         }
     }
@@ -176,95 +197,36 @@ public class OffensiveUnit : MonoBehaviour
                 OgAttackDest = target.position;
             }
             else {
-                OgAttackDest = agent.destination;
+                OgAttackDest = _seeker.destination;
             }
         }
         currentState = state;
     }
 
     private void CheckArrival() {
-        if (agent.enabled && Vector3.Distance(transform.position, agent.destination) <= distThreshold) {
-            agent.destination = transform.position;
+        if (_seeker.enabled && Vector3.Distance(transform.position, _seeker.destination) <= distThreshold) {
+            _seeker.destination = transform.position;
             StartCoroutine(ToggleAgent(UnitStates.IDLE));
         }
     }
 
-    /*private IEnumerator ToggleAgent() {
-        //print("ToggleAgent no destination: START");
-        isChangingAgent = true;
-        if (agent.enabled) {
-            agent.enabled = false;
-            yield return new WaitForSeconds(0);
-            obstacle.enabled = true;
-        }
-        else {
-            obstacle.enabled = false;
-            yield return new WaitForSeconds(0);
-            agent.enabled = true;
-        }
-        isChangingAgent = false;
-        //print("ToggleAgent no destination: END");
-    }*/
-
-    private IEnumerator ToggleAgent(UnitStates state) {
-        isChangingAgent = true;
-        if (agent.enabled) {
-            agent.enabled = false;
-            yield return new WaitForSeconds(0);
-            obstacle.enabled = true;
-        }
-        else {
-            obstacle.enabled = false;
-            yield return new WaitForSeconds(0);
-            agent.enabled = true;
-        }
-        ChangeState(state);
-        isChangingAgent = false;
-    }
-
-    private IEnumerator ToggleAgent(Vector3 pos) {
-        isChangingAgent = true;
-        if (!agent.enabled) {
-            obstacle.enabled = false;
-            yield return new WaitForSeconds(0);
-            agent.enabled = true;
-            agent.destination = pos;
-        }
-        isChangingAgent = false;
-    }
-
-    private IEnumerator ToggleAgent(Vector3 pos, UnitStates state) {
-        isChangingAgent = true;
-        if (!agent.enabled) {
-            obstacle.enabled = false;
-            yield return new WaitForSeconds(0);
-            agent.enabled = true;
-            agent.destination = pos;
-            ogAttackDest = pos;
-        }
-        ChangeState(state);
-        isChangingAgent = false;
-    }
-
     public void MoveTo(Vector3 pos, UnitStates state) {
-        if (!agent.enabled)
-        {
+        if (!_seeker.enabled) {
             StartCoroutine(ToggleAgent(pos, state));
         }
         else {
-            agent.destination = pos;
+            _seeker.destination = pos;
             ogAttackDest = pos;
             ChangeState(state);
         }
     }
 
     public void MoveTo(Transform trans, UnitStates state) {
-        if (!agent.enabled)
-        {
+        if (!_seeker.enabled) {
             StartCoroutine(ToggleAgent(trans.position, state));
         }
         else {
-            agent.destination = trans.position;
+            _seeker.destination = trans.position;
             ogAttackDest = trans.position;
             ChangeState(state);
         }
@@ -312,17 +274,17 @@ public class OffensiveUnit : MonoBehaviour
 
     public void SetTarget(Transform t) {
         target = t;
-        if (!agent.enabled) {
+        if (!_seeker.enabled) {
             StartCoroutine(ToggleAgent(target.position, UnitStates.ATTACK));
         }
         else {
-            agent.destination = target.position;
+            _seeker.destination = target.position;
             ChangeState(UnitStates.ATTACK);
         }
     }
 
     public IEnumerator Attack(Transform tar) {
-        if (agent.enabled) {
+        if (_seeker.enabled) {
             StartCoroutine(ToggleAgent(UnitStates.ATTACK));
         }
         if (canFire) {
